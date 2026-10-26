@@ -81,6 +81,17 @@ def sample_cv():
     return _save_cv(parse_cv(text).to_dict())
 
 
+class CvTextReq(BaseModel):
+    text: str
+
+@app.post("/api/cv/text")
+def upload_cv_text(req: CvTextReq):
+    text = req.text.strip()
+    if len(text) < 80:
+        raise HTTPException(400, "Text is too short. Paste at least a few paragraphs from your CV.")
+    return _save_cv(parse_cv(text).to_dict())
+
+
 # ------------------------------------------------------------------ offers
 class SearchReq(BaseModel):
     source: str = "demo"  # demo | adzuna

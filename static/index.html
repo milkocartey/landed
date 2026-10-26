@@ -52,6 +52,17 @@
       </label>
       <p class="alt">No CV at hand? <button class="link" id="sample-cv">Try with Alex Martin's sample CV</button></p>
 
+      <div class="cv-paste-wrap" id="cv-paste-wrap">
+        <button class="link" id="show-cv-paste">Or paste your CV text</button>
+        <div id="cv-paste-area" hidden>
+          <textarea id="cv-text" rows="10" placeholder="Paste the full text of your CV here…"></textarea>
+          <div class="cv-paste-actions">
+            <button class="btn ghost" id="hide-cv-paste" type="button">Cancel</button>
+            <button class="btn primary" id="use-cv-text" type="button">Use this text</button>
+          </div>
+        </div>
+      </div>
+
       <div class="cv-bar">
         <span class="grow" id="cv-bar-text"></span>
         <button class="btn ghost" type="button" id="replace-cv">Replace CV</button>
@@ -93,14 +104,27 @@
           </div>
         </div>
         <button class="btn primary" type="submit">Search</button>
-        <button class="btn ghost" type="button" id="open-paste">Paste an offer</button>
       </form>
 
       <div class="offers-layout">
         <ol class="offer-list" id="offer-list" aria-live="polite"></ol>
         <aside class="detail" id="detail" aria-live="polite">
-          <div class="empty">
-            <p>Search to see offers ranked by how well they fit your CV. You can also paste an offer you found on JobTeaser, LinkedIn or anywhere else.</p>
+          <div id="paste-inline">
+            <h3>Paste an offer</h3>
+            <p class="muted">Copy the text from JobTeaser, LinkedIn, Welcome to the Jungle or any job site. Landed scores it against your CV instantly.</p>
+            <form id="paste-form">
+              <div class="field"><label for="m-title">Job title</label><input id="m-title" required></div>
+              <div class="row">
+                <div class="field grow"><label for="m-company">Company</label><input id="m-company"></div>
+                <div class="field grow"><label for="m-source">Found on</label>
+                  <select id="m-source"><option>JobTeaser</option><option>LinkedIn</option><option>Welcome to the Jungle</option><option>Company website</option><option>Other</option></select></div>
+              </div>
+              <div class="field"><label for="m-url">Link (optional)</label><input id="m-url" type="url"></div>
+              <div class="field"><label for="m-desc">Offer description</label><textarea id="m-desc" rows="8" required></textarea></div>
+              <div class="paste-actions">
+                <button class="btn primary" type="submit">Score this offer</button>
+              </div>
+            </form>
           </div>
         </aside>
       </div>
@@ -117,28 +141,8 @@
     </section>
   </main>
 
-  <!-- paste-an-offer drawer -->
+  <!-- application editor drawer (kept) -->
   <div class="scrim" id="scrim" hidden></div>
-  <aside class="drawer" id="paste" role="dialog" aria-modal="true" aria-labelledby="paste-title" hidden>
-    <form id="paste-form">
-      <h2 id="paste-title">Paste an offer</h2>
-      <p class="muted">Copy the text of any internship offer. Landed scores it against your CV like the others.</p>
-      <div class="field"><label for="m-title">Job title</label><input id="m-title" required></div>
-      <div class="row">
-        <div class="field grow"><label for="m-company">Company</label><input id="m-company"></div>
-        <div class="field grow"><label for="m-source">Found on</label>
-          <select id="m-source"><option>JobTeaser</option><option>LinkedIn</option><option>Welcome to the Jungle</option><option>Company website</option><option>Other</option></select></div>
-      </div>
-      <div class="field"><label for="m-url">Link (optional)</label><input id="m-url" type="url"></div>
-      <div class="field"><label for="m-desc">Offer description</label><textarea id="m-desc" rows="10" required></textarea></div>
-      <div class="actions">
-        <button class="btn ghost" type="button" data-close>Cancel</button>
-        <button class="btn primary" type="submit">Score this offer</button>
-      </div>
-    </form>
-  </aside>
-
-  <!-- application editor -->
   <aside class="drawer" id="editor" role="dialog" aria-modal="true" aria-labelledby="ed-title" hidden></aside>
 
   <div class="toast" id="toast" role="status" hidden></div>

@@ -287,3 +287,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { border-color
 body.has-cv .hero, body.has-cv #drop, body.has-cv .alt { display: none; }
 body:not(.has-cv) .cv-bar { display: none; }
 body.has-cv .profile { margin-top: 24px; }
+body.has-cv .cv-paste-wrap { display: none; }
+
+/* CV paste toggle */
+.cv-paste-wrap { max-width: 760px; margin-top: 12px; }
+#cv-paste-area { margin-top: 10px; display: grid; gap: 8px; }
+.cv-paste-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* Paste an offer inline */
+#paste-inline { padding: 4px 0; }
+#paste-inline h3 { font-size: 22px; margin-bottom: 6px; }
+#paste-inline .muted { margin: 0 0 18px; font-size: 15px; }
+#paste-inline form { display: grid; gap: 12px; }
+#paste-inline .row { display: flex; gap: 12px; flex-wrap: wrap; }
+.paste-actions { display: flex; justify-content: flex-end; margin-top: 4px; }

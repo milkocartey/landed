@@ -189,6 +189,23 @@
 
   $("#replace-cv").addEventListener("click", () => $("#cv-file").click());
 
+  // CV text paste
+  $("#show-cv-paste").addEventListener("click", () => {
+    $("#cv-paste-area").hidden = false;
+    $("#cv-text").focus();
+  });
+  $("#hide-cv-paste").addEventListener("click", () => { $("#cv-paste-area").hidden = true; });
+  $("#use-cv-text").addEventListener("click", async () => {
+    const text = $("#cv-text").value.trim();
+    if (!text) { toast("Paste some text first.", true); return; }
+    try {
+      renderProfile(await api("/api/cv/text", { json: { text } }));
+      toast("CV read. Next: find matching offers.");
+      $("#cv-paste-area").hidden = true;
+      $("#cv-text").value = "";
+    } catch (err) { toast(err.message, true); }
+  });
+
   // home teaser: one orchestrated moment on first load
   function playTeaser() {
     flapText($("#teaser-title"), "DEPARTURES", { asTiles: true });
@@ -249,7 +266,8 @@
     const list = $("#offer-list");
     const tracked = trackedIds();
     if (!state.offers.length) {
-      list.innerHTML = `<li class="muted">No offer matches these words. Try broader keywords, or paste an offer you found.</li>`;
+      list.innerHTML = `<li class="muted">No results. Try different keywords, or paste an offer on the right.</li>`;
+      const pi = $("#paste-inline"); if (pi) pi.hidden = false;
       return;
     }
     list.innerHTML = state.offers.map((o) => `
@@ -281,6 +299,8 @@
 
   function renderDetail(o) {
     const d = $("#detail");
+    const pi = $("#paste-inline");
+    if (pi) pi.hidden = true;
     const tracked = trackedIds().has(o.id);
     d.innerHTML = `
       <div style="display:flex;gap:18px;align-items:center">${scoreRing(o.score)}
@@ -392,7 +412,7 @@
     } catch (err) { toast(err.message, true); }
   }
 
-  // ------------------------------------------------------------------ paste drawer
+  // ------------------------------------------------------------------ editor drawer
   function openDrawer(id) {
     const d = $(id);
     $("#scrim").hidden = false; d.hidden = false;
@@ -406,25 +426,27 @@
     open.forEach((d) => (d.hidden = true));
     $("#scrim").hidden = true;
   }
-  $("#open-paste").addEventListener("click", () => openDrawer("#paste"));
   $("#scrim").addEventListener("click", closeDrawers);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawers(); });
   document.addEventListener("click", (e) => { if (e.target.closest("[data-close]")) closeDrawers(); });
 
+  // ------------------------------------------------------------------ paste inline
   $("#paste-form").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const btn = e.target.querySelector("[type=submit]");
+    btn.disabled = true;
     try {
       const { offer } = await api("/api/offers/manual", { json: {
         title: $("#m-title").value, company: $("#m-company").value, description: $("#m-desc").value,
         url: $("#m-url").value, source: $("#m-source").value,
       } });
       state.offers = [offer, ...state.offers.filter((o) => o.id !== offer.id)];
-      await closeDrawers();
       e.target.reset();
       renderOffers();
       selectOffer(offer.id);
       toast(`Scored ${offer.score}/100 against your CV.`);
     } catch (err) { toast(err.message, true); }
+    finally { btn.disabled = false; }
   });
 
   // ------------------------------------------------------------------ board
