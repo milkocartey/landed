@@ -24,6 +24,7 @@ from fastapi.responses import FileResponse, Response  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
+from . import bias as bias_mod  # noqa: E402
 from . import crm, export, generator, matcher, sources  # noqa: E402
 from .cv_parser import parse_cv, read_file  # noqa: E402
 
@@ -172,6 +173,26 @@ def export_cv(req: CvExport):
 def export_letter(req: LetterExport):
     return Response(export.letter_docx(req.text), media_type=DOCX,
                     headers={"Content-Disposition": f'attachment; filename="{req.filename}.docx"'})
+
+
+# ------------------------------------------------------------------ bias
+class BiasReq(BaseModel):
+    description: str
+
+
+class BiasTestReq(BaseModel):
+    offer: dict
+
+
+@app.post("/api/bias/offer")
+def bias_offer(req: BiasReq):
+    return bias_mod.analyze_offer(req.description)
+
+
+@app.post("/api/bias/test")
+def bias_test(req: BiasTestReq):
+    cv = _need_cv()
+    return bias_mod.counterfactual_test(cv, req.offer, matcher)
 
 
 # ------------------------------------------------------------------ CRM

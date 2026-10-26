@@ -218,5 +218,35 @@
   "url": "",
   "posted": "2026-10-03",
   "source": "Demo dataset"
+ },
+ {
+  "id": "demo-b1",
+  "title": "Sales Development Representative Intern",
+  "company": "Zenith Ventures (fictional — contains bias)",
+  "location": "Paris",
+  "description": "We are a young and dynamic startup looking for a competitive, aggressive go-getter to join our sales team. You will dominate your territory, outperform your peers and champion our product with maximum confidence. We need a rockstar closer who is fearless and independent, not afraid to challenge prospects and assert themselves in tough negotiations. Bonne présentation indispensable pour les rendez-vous clients. Native speaker English required.",
+  "url": "",
+  "posted": "2026-10-20",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-b2",
+  "title": "Stage Assistant Marketing — Beauté",
+  "company": "Lumière Paris (fictional — contains bias)",
+  "location": "Paris",
+  "description": "Rejoignez notre équipe jeune et dynamique pour soutenir nos campagnes beauté. Nous recherchons un(e) stagiaire présentable, avec une bonne présentation, sensible aux tendances, warm et caring avec les équipes. Vous êtes empathique, honest et collaborative. Langue maternelle française requise. Maximum 25 ans.",
+  "url": "",
+  "posted": "2026-10-21",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-b3",
+  "title": "Strategy Analyst Intern",
+  "company": "Pinnacle Advisory (fictional — contains bias)",
+  "location": "Paris",
+  "description": "Join our elite consulting team. We seek a young professional who is bold, dominant in client interactions and driven to lead. You must be superior in analytical output, decisive under pressure, and willing to outperform in a highly competitive environment. The ideal candidate is an ambitious individual contributor who can challenge senior partners. Native speaker English or French (mother tongue) required.",
+  "url": "",
+  "posted": "2026-10-22",
+  "source": "Demo dataset"
  }
 ]

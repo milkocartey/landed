@@ -319,12 +319,23 @@
         <button class="btn primary" id="gen-btn">Write my cover letter and CV</button>
         <button class="btn ghost" id="save-btn">${tracked ? "On your board" : "Save to board"}</button>
       </div>
-      <div id="gen-area"></div>`;
+      <div id="gen-area"></div>
+      <div class="bias-panel" id="bias-panel">
+        <h3>Bias check</h3>
+        <p class="muted" style="margin:2px 0 10px;font-size:14px">Wording analysis (legal risk, exclusionary language, gender coding) and a counterfactual fairness test that replays our own scoring with different candidate names.</p>
+        <div class="bias-actions">
+          <button class="btn ghost" id="bias-btn">Analyse offer wording</button>
+          <button class="btn ghost" id="cftest-btn">Test our score for bias</button>
+        </div>
+        <div id="bias-result" hidden></div>
+      </div>`;
     anim(d, { opacity: [0.4, 1] }, { duration: 0.2 });
     anim($$(".bar .fill", d), { scaleX: [0, 1] }, { duration: 0.6, ease: "easeOut", delay: stagger(0.1) });
     playRings(d);
     $("#gen-btn").addEventListener("click", () => generate(o));
     $("#save-btn").addEventListener("click", () => saveToBoard(o, "saved"));
+    $("#bias-btn").addEventListener("click", () => runBiasCheck(o));
+    $("#cftest-btn").addEventListener("click", () => runCfTest(o));
     if (state.generated[o.id]) renderGenerated(o, state.generated[o.id]);
   }
 
@@ -396,6 +407,71 @@
     $("#dl-cv").addEventListener("click", async () =>
       download(await api("/api/export/cv", { json: { cv: res.cv } }), `cv_${slug(o.company)}.docx`));
     $("#applied-btn").addEventListener("click", () => saveToBoard(o, "applied", res));
+  }
+
+  // ------------------------------------------------------------------ bias panel
+  function renderBiasWording(r) {
+    const parts = [];
+    if (!r.legal.length && !r.exclusionary.length) {
+      parts.push(`<div class="ok">No legal risk or exclusionary wording detected.</div>`);
+    }
+    if (r.legal.length) {
+      parts.push(`<div class="bias-section legal"><b>Legal risk — ${r.legal.length} flag${r.legal.length > 1 ? "s" : ""}</b>${
+        r.legal.map((f) => `<div class="bias-flag">
+          <span class="bias-match">${esc(f.match)}</span>
+          <p>${esc(f.explanation)}</p>
+          <p class="suggestion">Suggestion: ${esc(f.suggestion)}</p>
+        </div>`).join("")}</div>`);
+    }
+    if (r.exclusionary.length) {
+      parts.push(`<div class="bias-section excl"><b>Exclusionary wording — ${r.exclusionary.length} flag${r.exclusionary.length > 1 ? "s" : ""}</b>${
+        r.exclusionary.map((f) => `<div class="bias-flag">
+          <span class="bias-match">${esc(f.match)}</span>
+          <p>${esc(f.explanation)}</p>
+          <p class="suggestion">Suggestion: ${esc(f.suggestion)}</p>
+        </div>`).join("")}</div>`);
+    }
+    const hasMasc = r.gender_masc.length > 0, hasFem = r.gender_fem.length > 0;
+    parts.push(`<div class="bias-section gender"><b>Gender-coded wording</b>
+      <p class="muted" style="font-size:14px">${esc(r.gender_note)}</p>
+      ${hasMasc ? `<p style="margin:4px 0">Masculine signals: ${r.gender_masc.map((s) => `<span class="chip flag-masc">${esc(s)}</span>`).join(" ")}</p>` : ""}
+      ${hasFem ? `<p style="margin:4px 0">Feminine signals: ${r.gender_fem.map((s) => `<span class="chip flag-fem">${esc(s)}</span>`).join(" ")}</p>` : ""}
+    </div>`);
+    return parts.join("");
+  }
+
+  function renderCfResult(r) {
+    const cls = r.verdict === "fair" ? "ok" : "warning";
+    return `<div class="${cls}">${esc(r.explanation)}</div>
+    <table class="cf-table">
+      <thead><tr><th>Name variant</th><th>Score</th><th>Semantic</th><th>Skill match</th></tr></thead>
+      <tbody>${r.results.map((row) => `<tr><td>${esc(row.name)}</td><td>${row.score}</td><td>${row.semantic}</td><td>${row.coverage}</td></tr>`).join("")}</tbody>
+    </table>`;
+  }
+
+  async function runBiasCheck(o) {
+    const result = $("#bias-result");
+    result.hidden = false;
+    result.innerHTML = `<p class="muted" style="font-size:14px">Checking wording…</p>`;
+    try {
+      const r = await api("/api/bias/offer", { json: { description: o.description } });
+      result.innerHTML = `<h4 style="margin:12px 0 8px">Wording analysis</h4>` + renderBiasWording(r);
+    } catch (err) {
+      result.innerHTML = `<div class="warning">${esc(err.message)}</div>`;
+    }
+  }
+
+  async function runCfTest(o) {
+    const result = $("#bias-result");
+    result.hidden = false;
+    result.innerHTML = `<div class="thinking"><span class="plane"><i></i></span>Testing 3 name variants against your CV…</div>`;
+    loader(result);
+    try {
+      const r = await api("/api/bias/test", { json: { offer: o } });
+      result.innerHTML = `<h4 style="margin:12px 0 8px">Counterfactual fairness test</h4>` + renderCfResult(r);
+    } catch (err) {
+      result.innerHTML = `<div class="warning">${esc(err.message)}</div>`;
+    }
   }
 
   async function saveToBoard(o, status, res = state.generated[o.id]) {
