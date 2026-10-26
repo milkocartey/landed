@@ -6,6 +6,7 @@
 2. **Ranks internship offers** by how well they fit you, and explains why (skills you have, skills the offer also asks for).
 3. **Writes a tailored cover letter and CV version** for each offer, using only facts from your CV, and **flags any skill you never claimed**.
 4. **Tracks every application** on a departures-style board (saved → applied → interview → offer / rejected), with follow-up reminders and response-rate statistics.
+5. **Checks every offer for bias** — wording that may be discriminatory under French law, exclusionary language, gender-coded vocabulary, and a counterfactual fairness test on our own matching model (inspired by the Amazon recruiting AI incident).
 
 Everything runs **on your own computer with open-source models**: no paid API, no data sent to a chatbot.
 
@@ -49,7 +50,7 @@ The first time you match offers and write a letter, the models download from Hug
 
 ### Step 2: Matching offers
 - Type what you're looking for and where, then **Search**.
-  - **Demo offers**: 22 synthetic internship offers shipped with the app (works offline).
+  - **Demo offers**: 22 neutral synthetic offers + 3 intentionally biased ones (marked "contains bias") so you can try the bias checker immediately.
   - **Live (Adzuna)**: real offers from the Adzuna API. Get free keys at https://developer.adzuna.com/signup and put them in `.env` (`ADZUNA_APP_ID`, `ADZUNA_APP_KEY`), then restart.
 - **Paste an offer**: found something on JobTeaser, LinkedIn or Welcome to the Jungle? Paste its text. Landed scores it like the others. (We don't scrape these sites: their terms forbid it, and you choose what to bring.)
 - Click an offer to see its **match score (0-100)** and its two components:
@@ -59,6 +60,12 @@ The first time you match offers and write a letter, the models download from Hug
   - *Cover letter* tab: editable text. A green banner confirms every skill mentioned is in your CV; a yellow one lists skills you never claimed.
   - *Tailored CV* tab: same facts as your CV, with the skills this offer asks for first and your bullet points re-ordered by relevance.
   - Download both as **.docx**, then **Add to board as applied**.
+- **Bias check** (below every offer):
+  - *Analyse offer wording* — three-layer rule scan:
+    1. **Legal risk**: wording potentially discriminatory under French law (Code du travail L.1133-1) — age criteria (*young*, *jeune et dynamique*, explicit age caps), appearance (*bonne présentation*).
+    2. **Exclusionary**: *native speaker* / *mother tongue* / *langue maternelle* — excludes highly proficient non-native speakers without adding objectivity. Not illegal per se, but a CEFR level (C1/C2) is a more defensible alternative.
+    3. **Gender-coded vocabulary**: counts masculine-signal words (aggressive, competitive, dominant, rockstar…) and feminine-signal words (collaborative, nurturing, empathetic…). Lexicon from Gaucher, Friesen & Kay (2011). Informational — no word is inherently bad, but a strong imbalance can discourage candidates.
+  - *Test our score for bias* — **counterfactual fairness test**: the same CV is re-scored three times with a male, a female, and a gender-neutral name. A delta above 3 points flags a potential bias in our own matching model. This reproduces the mechanism behind the Amazon recruiting AI incident (Reuters, Oct 2018), where a model trained on historical CVs learned to downgrade candidates based on name-encoded signals.
 
 ### Step 3: Application board
 - Drag cards between columns (keyboard: focus a card and press **Alt + ←/→**).
@@ -85,6 +92,15 @@ offers (Adzuna API / pasted / demo) ────────────┤
                                                 │
                                                 ▼
    Guard: skills mentioned in generated text are checked against the CV; unsupported claims are flagged
+                                                │
+                                                ▼
+   Bias check (offer wording):
+     ├─ LEGAL_RISK: regex against Code du travail L.1133-1 patterns (age, appearance) — EN + FR
+     ├─ EXCLUSIONARY: native speaker / mother tongue / langue maternelle
+     └─ GENDER_CODED: word-stem matching (Gaucher et al. 2011) — counts masculine vs feminine signals
+
+   Counterfactual fairness test (our own model):
+     └─ Re-score the CV with 3 name variants (male / female / neutral) — flag if delta > 3 pts
 ```
 
 Why it goes beyond a simple chatbot call:
@@ -92,20 +108,23 @@ Why it goes beyond a simple chatbot call:
 - **Retrieval-grounded generation**: the LLM only writes from the CV, the CV is restructured algorithmically, and an automatic **hallucination guard** checks the output.
 - **Small open models, local inference**: free for every student, private by design, reproducible.
 - **Graceful degradation**: the app always runs (TF-IDF + templates) even without models or internet.
+- **Responsible AI by design**: bias checks run on every offer (wording) and on our own model (counterfactual test), making the system's limitations visible rather than hidden.
 
 Project layout:
 
 ```
-app/main.py        FastAPI server and REST API
-app/cv_parser.py   CV reading and section detection
-app/skills.py      skill vocabulary and extraction
-app/matcher.py     hybrid matching (embeddings / TF-IDF)
-app/generator.py   tailored CV, cover letter (LLM), hallucination guard
-app/sources.py     Adzuna API, pasted offers, demo dataset
-app/crm.py         application board (SQLite)
-app/export.py      .docx export
-static/            front end (HTML/CSS/JS + Motion animations)
-data/              demo offers, sample CV
+app/main.py          FastAPI server and REST API
+app/cv_parser.py     CV reading and section detection
+app/skills.py        skill vocabulary and extraction
+app/matcher.py       hybrid matching (embeddings / TF-IDF)
+app/generator.py     tailored CV, cover letter (LLM), hallucination guard
+app/sources.py       Adzuna API, pasted offers, demo dataset
+app/crm.py           application board (SQLite)
+app/export.py        .docx export
+app/bias.py          wording analysis + counterfactual fairness test
+app/bias_lexicon.py  rule-based lexicon (legal risk, exclusionary, gender-coded)
+static/              front end (HTML/CSS/JS + Motion animations)
+data/                demo offers (22 neutral + 3 biased), sample CV
 ```
 
 ## 4. Configuration (`.env`)
@@ -126,7 +145,8 @@ data/              demo offers, sample CV
 - The skill extractor knows 58 skills with aliases; skills outside this list are not counted in coverage (they still count in semantic similarity).
 - A 1.5B-parameter model writes decent but simple letters: always re-read and edit. Bigger models (e.g. 7B via Ollama) write better and need more RAM.
 - Adzuna has no "internship" filter: Landed adds internship keywords to the search, so some results may be other contracts. Adzuna returns a snippet of the description, not the full text.
-- The demo offers are synthetic (fictional companies) and only for demonstration.
+- The demo offers are synthetic (fictional companies). 3 of the 25 are intentionally biased so the bias checker has something to find.
+- The bias checker is rule-based and incomplete — it does not catch every form of bias, only the patterns in the lexicon. A delta ≤ 3 in the counterfactual test does not prove the model is fair, only that it is not sensitive to the name signals we tested.
 
 ## 6. Credits and citations
 

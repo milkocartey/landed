@@ -26,9 +26,20 @@ References:
 - [Motion](https://motion.dev) (vanilla JS build, v14.6.0, bundled in `static/vendor/motion.js`) — animations. MIT (see `static/vendor/MOTION_LICENSE.md`).
 - [Barlow and Barlow Condensed](https://github.com/jpt/barlow) by Jeremy Tribby, via [@fontsource](https://fontsource.org) — typefaces, bundled locally. SIL Open Font License 1.1.
 
+## Bias check
+
+### Research references
+- D. Gaucher, J. Friesen, A. C. Kay. *Evidence That Gendered Wording in Job Advertisements Exists and Sustains Gender Inequality*. Journal of Personality and Social Psychology, 101(1), 109-128. American Psychological Association, 2011. DOI: 10.1037/a0022530
+  — Source of the masculine/feminine word-stem lists in `app/bias_lexicon.py`.
+- Reuters. *Amazon scraps secret AI recruiting tool that showed bias against women*. October 10, 2018.
+  — Inspired the counterfactual fairness test: re-scoring the same CV with different candidate names to detect name-encoded signals in the embedding model.
+
+### Legal references
+- *Code du travail français, article L.1133-1* — prohibits hiring discrimination based on origin, sex, age, appearance, and other criteria unless the criterion is an essential and determining professional requirement. Basis for the LEGAL_RISK lexicon category.
+
 ## Data
 - **Adzuna Jobs API** — live job offers, free developer tier. https://developer.adzuna.com
-- **`data/demo_offers.json`** — 22 synthetic internship offers with fictional companies, written for this project with the help of Claude (Anthropic). Not real offers.
+- **`data/demo_offers.json`** — 22 neutral synthetic internship offers + 3 intentionally biased ones (marked "contains bias") with fictional companies, written for this project with the help of Claude (Anthropic). Not real offers.
 - **`data/sample_cv.txt` / `sample_cv.pdf`** — fictional CV ("Alex Martin"), written for this project.
 
 ## Optional

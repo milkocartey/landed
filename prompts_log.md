@@ -27,3 +27,41 @@ Kept verbatim (original language: French) for the "show us where and how you use
 
 ## 7 — 2026-10-24 22:40
 > oui en anglais stp
+
+## 8 — 2026-10-25 (session 2 — live offers debugging)
+> pourquoi est ce que les offres sont fictives ?
+
+## 9 — 2026-10-25
+> y'a pas un autre moyen pour recup les offres légalement ? Parce que là c'est très institutionnel adzuna, un projet open source or something
+
+## 10 — 2026-10-25
+> ma filière c'est Strategy and Management of International Business à l'ESSEC Business School, il faut des offres qui correspondent aux différents secteurs qu'attendent les étudiant (Cabinet de conseil, startup tech, Paris ou Singapour)
+
+## 11 — 2026-10-25
+> les offres apparaissent mais sont fausses : This job may have expired...
+
+## 12 — 2026-10-25
+> y'a pas le meme type d'api pour Paris ou la France spécifiquement ?
+
+---
+
+## 13 — 2026-10-26 (session 3 — comprehensive refactor, phases 0-4)
+> [Large structured prompt specifying a 4-phase refactor with a deadline of October 29, 23:59:
+> Phase 0: safety net (git init, audit, plan);
+> Phase 1: fix live offers / remove broken sources;
+> Phase 2: clean interface (paste CV text, paste offer inline, remove broken source buttons);
+> Phase 3: bias check (offer wording analysis EN+FR, counterfactual fairness test, Amazon replay);
+> Phase 4: verify, document, package.]
+
+## 14 — 2026-10-26
+> supprime les 3
+> [Remove Arbeitnow, France Travail, MyCareersFuture — confirmed after Claude proposed it]
+
+## 15 — 2026-10-26
+> phase 2
+
+## 16 — 2026-10-26
+> phase 3
+
+## 17 — 2026-10-27
+> phase 4
