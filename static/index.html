@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Landed — your internship search, on one board</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2316202E'/><path d='M7 21h18M10 17l12-6 2 2-9 6' stroke='%23F2C230' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" data-go="profile" aria-label="Landed home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 23h22M9 18.5l13.5-7 2.5 2.5-10.5 7" /></svg>
+      <span>Landed</span>
+    </a>
+    <nav class="steps" aria-label="Main">
+      <button class="step" data-go="profile" aria-current="page"><b>1</b> Your CV</button>
+      <button class="step" data-go="offers"><b>2</b> Matching offers</button>
+      <button class="step" data-go="board"><b>3</b> Application board</button>
+    </nav>
+    <div class="engine" id="engine" title="AI engines in use"></div>
+  </header>
+
+  <main>
+    <!-- ======================================================== PROFILE -->
+    <section class="view" id="view-profile" data-view="profile">
+      <div class="hero">
+      <div class="intro">
+        <h1>Drop your CV. Get offers that fit, a tailored application for each one, and one board to track them all.</h1>
+        <p class="lede">Landed reads your CV, ranks internship offers by how well they match you, and drafts a cover letter and CV version for each. It runs on open-source models on your own computer.</p>
+      </div>
+      <figure class="teaser" aria-label="Example of the application board">
+        <div class="tt" id="teaser-title">DEPARTURES</div>
+        <table>
+          <thead><tr><th>Internship</th><th>Company</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Data Analyst</td><td>Northwind</td><td class="st" data-flap="APPLIED">APPLIED</td></tr>
+            <tr><td>ML Engineer</td><td>Lumen</td><td class="st good" data-flap="INTERVIEW">INTERVIEW</td></tr>
+            <tr><td>Strategy</td><td>Meridian</td><td class="st" data-flap="FOLLOW UP">FOLLOW UP</td></tr>
+            <tr><td>Product</td><td>Kite</td><td class="st good" data-flap="OFFER">OFFER</td></tr>
+          </tbody>
+        </table>
+        <p>Every application you send lands here, with reminders when it's time to follow up.</p>
+      </figure>
+      </div>
+
+      <label class="drop" id="drop" tabindex="0">
+        <input type="file" id="cv-file" accept=".pdf,.docx,.txt" hidden>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 31V11m0 0-8 8m8-8 8 8M10 31v6h28v-6"/></svg>
+        <strong>Drop your CV here or choose a file</strong>
+        <span>PDF, DOCX or TXT. Your file stays on this computer.</span>
+      </label>
+      <p class="alt">No CV at hand? <button class="link" id="sample-cv">Try with Alex Martin's sample CV</button></p>
+
+      <div class="cv-bar">
+        <span class="grow" id="cv-bar-text"></span>
+        <button class="btn ghost" type="button" id="replace-cv">Replace CV</button>
+      </div>
+
+      <div class="profile" id="profile" hidden>
+        <div class="profile-head">
+          <div>
+            <h2 id="p-name"></h2>
+            <p class="muted" id="p-meta"></p>
+          </div>
+          <button class="btn primary" data-go="offers">Find matching offers</button>
+        </div>
+        <h3>Skills found in your CV</h3>
+        <div id="p-skills" class="skill-groups"></div>
+        <details class="raw">
+          <summary>See how your CV was read</summary>
+          <div id="p-sections"></div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ======================================================== OFFERS -->
+    <section class="view" id="view-offers" data-view="offers" hidden>
+      <form class="search" id="search">
+        <div class="field grow">
+          <label for="q">What are you looking for?</label>
+          <input id="q" placeholder="data analyst, marketing, finance…" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="loc">Where</label>
+          <input id="loc" placeholder="Paris" autocomplete="off">
+        </div>
+        <div class="field">
+          <span class="label" id="src-label">Source</span>
+          <div class="toggle" role="radiogroup" aria-labelledby="src-label">
+            <button type="button" role="radio" aria-checked="false" data-src="france_travail">France Travail</button>
+            <button type="button" role="radio" aria-checked="false" data-src="mycareersfuture">Singapore</button>
+            <button type="button" role="radio" aria-checked="true" data-src="arbeitnow">Arbeitnow</button>
+            <button type="button" role="radio" aria-checked="false" data-src="adzuna">Adzuna</button>
+            <button type="button" role="radio" aria-checked="false" data-src="demo">Demo</button>
+          </div>
+        </div>
+        <button class="btn primary" type="submit">Search</button>
+        <button class="btn ghost" type="button" id="open-paste">Paste an offer</button>
+      </form>
+
+      <div class="offers-layout">
+        <ol class="offer-list" id="offer-list" aria-live="polite"></ol>
+        <aside class="detail" id="detail" aria-live="polite">
+          <div class="empty">
+            <p>Search to see offers ranked by how well they fit your CV. You can also paste an offer you found on JobTeaser, LinkedIn or anywhere else.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ======================================================== BOARD -->
+    <section class="view" id="view-board" data-view="board" hidden>
+      <div class="board-head">
+        <h1 class="flap-title" id="board-title" aria-label="Departures">DEPARTURES</h1>
+        <dl class="stats" id="stats"></dl>
+      </div>
+      <div class="followups" id="followups" hidden></div>
+      <div class="board" id="board"></div>
+    </section>
+  </main>
+
+  <!-- paste-an-offer drawer -->
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="drawer" id="paste" role="dialog" aria-modal="true" aria-labelledby="paste-title" hidden>
+    <form id="paste-form">
+      <h2 id="paste-title">Paste an offer</h2>
+      <p class="muted">Copy the text of any internship offer. Landed scores it against your CV like the others.</p>
+      <div class="field"><label for="m-title">Job title</label><input id="m-title" required></div>
+      <div class="row">
+        <div class="field grow"><label for="m-company">Company</label><input id="m-company"></div>
+        <div class="field grow"><label for="m-source">Found on</label>
+          <select id="m-source"><option>JobTeaser</option><option>LinkedIn</option><option>Welcome to the Jungle</option><option>Company website</option><option>Other</option></select></div>
+      </div>
+      <div class="field"><label for="m-url">Link (optional)</label><input id="m-url" type="url"></div>
+      <div class="field"><label for="m-desc">Offer description</label><textarea id="m-desc" rows="10" required></textarea></div>
+      <div class="actions">
+        <button class="btn ghost" type="button" data-close>Cancel</button>
+        <button class="btn primary" type="submit">Score this offer</button>
+      </div>
+    </form>
+  </aside>
+
+  <!-- application editor -->
+  <aside class="drawer" id="editor" role="dialog" aria-modal="true" aria-labelledby="ed-title" hidden></aside>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script src="/static/vendor/motion.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

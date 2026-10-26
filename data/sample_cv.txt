@@ -1,0 +1,35 @@
+Alex Martin
+alex.martin@example.com | +33 6 00 00 00 00 | Paris, France | linkedin.com/in/alex-martin-demo
+
+PROFILE
+Master's student in Data & Business Analytics looking for a 6-month internship starting in January.
+
+EDUCATION
+MSc in Data & Business Analytics - Example Business School, Paris (2025 - 2027)
+- Courses: Machine Learning, Advanced AI Algorithms, Statistics, Corporate Strategy, Marketing Analytics
+Bachelor in Economics & Management - Université Exemple, Lyon (2022 - 2025)
+- Graduated with honours; exchange semester at University of Example, Madrid
+
+EXPERIENCE
+Data Analyst Intern - RetailCo (fictional), Paris (Jun 2025 - Aug 2025)
+- Built a Power BI dashboard tracking sales of 120 stores, used weekly by regional managers
+- Cleaned and merged 3 years of transaction data in Python (pandas) and SQL
+- Ran an A/B test on promotional emails that increased click-through rate by 8%
+- Presented results to the marketing team and wrote recommendations for the next campaign
+Sales Assistant (part-time) - Sports Store (fictional), Lyon (2023 - 2024)
+- Advised customers and handled the checkout; trained two new seasonal employees
+
+PROJECTS
+- Customer churn prediction with scikit-learn (random forest, 0.84 AUC) for a telecom dataset from Kaggle
+- NLP project: sentiment analysis of 10,000 product reviews with a Hugging Face transformer model
+- Market research study for a student startup: survey of 300 people and competitive benchmark
+
+SKILLS
+Python, SQL, Excel (pivot tables), Power BI, Git, machine learning, statistics, data visualization, market research
+
+LANGUAGES
+French (native), English (fluent, TOEIC 945), Spanish (intermediate)
+
+ACTIVITIES
+- Treasurer of the school Data Science club: organised 4 workshops and a hackathon with 80 participants
+- Volleyball team captain

@@ -1,0 +1,222 @@
+[
+ {
+  "id": "demo-01",
+  "title": "Data Analyst Intern",
+  "company": "Northwind Retail (fictional)",
+  "location": "Paris",
+  "description": "6-month internship in our Customer Analytics team. You will build Power BI dashboards, write SQL queries on our sales data warehouse, analyse promotions with A/B tests and present insights to marketing managers. Required: SQL, Excel, a BI tool (Power BI or Tableau), strong communication. Python is a plus. English and French.",
+  "url": "",
+  "posted": "2026-10-02",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-02",
+  "title": "Machine Learning Engineer Intern",
+  "company": "Lumen Analytics (fictional)",
+  "location": "Paris",
+  "description": "Join our ML team to train and deploy machine learning models for demand forecasting. Python, scikit-learn, PyTorch, Docker and Git required. Knowledge of cloud (AWS or GCP) and APIs (FastAPI) appreciated. You will work in an agile team and present your results.",
+  "url": "",
+  "posted": "2026-10-03",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-03",
+  "title": "Data Scientist Intern - NLP",
+  "company": "Parlance AI (fictional)",
+  "location": "Lyon",
+  "description": "Help us build NLP features with large language models: text classification, RAG, prompt engineering, evaluation of LLM outputs. Python, deep learning (PyTorch or transformers), Hugging Face. Statistics background. Fluent English required.",
+  "url": "",
+  "posted": "2026-10-04",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-04",
+  "title": "Business Intelligence Intern",
+  "company": "Atlas Logistics (fictional)",
+  "location": "Lille",
+  "description": "Supply chain BI internship: build dashboards in Tableau, automate Excel reporting with VBA and SQL, analyse transport costs and inventory levels. Strong analytical skills and autonomy. French required.",
+  "url": "",
+  "posted": "2026-10-05",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-05",
+  "title": "Marketing Analytics Intern",
+  "company": "Bloom Cosmetics (fictional)",
+  "location": "Paris",
+  "description": "Analyse the performance of our digital marketing campaigns (Google Analytics, social media, SEO/SEA), build reporting dashboards and recommend budget allocation. Excel, data visualization, curiosity about brands. English and French.",
+  "url": "",
+  "posted": "2026-10-06",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-06",
+  "title": "Strategy Consulting Intern",
+  "company": "Meridian Partners (fictional)",
+  "location": "Paris",
+  "description": "Join our consulting teams on strategy missions: market research, competitive analysis, business plans and financial modelling in Excel. You will prepare client presentations. Strong problem-solving, teamwork, English fluency.",
+  "url": "",
+  "posted": "2026-10-07",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-07",
+  "title": "Product Manager Intern",
+  "company": "Kite Mobility (fictional)",
+  "location": "Bordeaux",
+  "description": "Work with the product owner on the roadmap of our mobility app: write user stories, analyse usage data with SQL, run user interviews and A/B tests, coordinate with designers (Figma) and developers in Scrum. Communication and leadership.",
+  "url": "",
+  "posted": "2026-10-08",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-08",
+  "title": "Financial Analyst Intern",
+  "company": "Harbor Capital (fictional)",
+  "location": "Paris",
+  "description": "Corporate finance internship: financial modelling, DCF valuation, analysis of financial statements, preparation of investment committee memos. Excellent Excel, accounting knowledge, rigor. English required.",
+  "url": "",
+  "posted": "2026-10-09",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-09",
+  "title": "Data Engineer Intern",
+  "company": "Streamline Energy (fictional)",
+  "location": "Nantes",
+  "description": "Build and maintain data pipelines (Airflow, dbt, Spark) on Google Cloud, write SQL and Python, monitor data quality. Git, Docker and Linux appreciated. Interest in energy and sustainability.",
+  "url": "",
+  "posted": "2026-10-10",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-10",
+  "title": "Sustainability Analyst Intern",
+  "company": "Greenpath Advisory (fictional)",
+  "location": "Paris",
+  "description": "Support ESG and CSR projects: carbon footprint calculations, data collection in Excel, benchmark of climate strategies, writing of client reports. Analytical mindset, communication skills, French and English.",
+  "url": "",
+  "posted": "2026-10-11",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-11",
+  "title": "Growth Marketing Intern",
+  "company": "Nimbus SaaS (fictional)",
+  "location": "Remote (France)",
+  "description": "Drive acquisition for our B2B SaaS: SEO, content marketing, LinkedIn campaigns, lead generation and CRM automation. Track performance in Google Analytics. Copywriting skills and autonomy. English required.",
+  "url": "",
+  "posted": "2026-10-12",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-12",
+  "title": "Computer Vision Intern",
+  "company": "Optiq Robotics (fictional)",
+  "location": "Grenoble",
+  "description": "Develop object detection models for warehouse robots: deep learning with PyTorch, OpenCV, data annotation, model evaluation. C++ is a plus. Linux, Git.",
+  "url": "",
+  "posted": "2026-10-13",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-13",
+  "title": "Business Developer Intern",
+  "company": "Tandem HR Tech (fictional)",
+  "location": "Paris",
+  "description": "Prospecting and lead generation for our HR software, account management of SMB clients, sales presentations, CRM hygiene. Strong communication, pitching skills, French and English.",
+  "url": "",
+  "posted": "2026-10-14",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-14",
+  "title": "Supply Chain Analyst Intern",
+  "company": "Verdant Foods (fictional)",
+  "location": "Lyon",
+  "description": "Optimise procurement and inventory with data: Excel models, Power BI dashboards, process improvement with lean methods. Collaboration with operations and purchasing teams.",
+  "url": "",
+  "posted": "2026-10-15",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-15",
+  "title": "Junior Data Analyst - Healthcare",
+  "company": "Caduceus Health (fictional)",
+  "location": "Paris",
+  "description": "Analyse patient-journey data with SQL and Python, statistics (regression, hypothesis testing), and build dashboards for hospital partners. Rigor and autonomy. French required.",
+  "url": "",
+  "posted": "2026-10-16",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-16",
+  "title": "AI Product Intern",
+  "company": "Prism Labs (fictional)",
+  "location": "Paris",
+  "description": "Explore generative AI use cases for our clients: prototype with LLMs and Hugging Face models, prompt engineering, benchmark tools, write product specs and present demos. Python basics, product management interest, English.",
+  "url": "",
+  "posted": "2026-10-17",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-17",
+  "title": "Audit Intern",
+  "company": "Ledger & Co (fictional)",
+  "location": "Marseille",
+  "description": "Financial audit internship: review of financial statements, IFRS, internal control testing, Excel. Teamwork and rigor. French required.",
+  "url": "",
+  "posted": "2026-10-18",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-18",
+  "title": "Brand Marketing Intern",
+  "company": "Maison Clair (fictional)",
+  "location": "Paris",
+  "description": "Support brand management for a lifestyle brand: marketing campaigns, social media (Instagram, TikTok), content creation, event organisation and market research. Canva or Adobe skills. French and English.",
+  "url": "",
+  "posted": "2026-10-19",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-19",
+  "title": "Quantitative Research Intern",
+  "company": "Vertex Markets (fictional)",
+  "location": "Paris",
+  "description": "Statistical modelling of financial time series in Python, machine learning for signal research, C++ appreciated. Strong statistics and mathematics. English.",
+  "url": "",
+  "posted": "2026-10-20",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-20",
+  "title": "Operations Analyst Intern",
+  "company": "Rail Express (fictional)",
+  "location": "Lille",
+  "description": "Improve operational performance: data analysis in Excel and SQL, dashboards, lean / six sigma process improvement, project management with Jira. Problem solving and teamwork.",
+  "url": "",
+  "posted": "2026-10-01",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-21",
+  "title": "HR Analytics Intern",
+  "company": "PeopleFirst (fictional)",
+  "location": "Paris",
+  "description": "Use data to improve recruitment: build HR dashboards in Power BI, analyse talent acquisition funnels, survey analysis with statistics. Excel, communication, confidentiality.",
+  "url": "",
+  "posted": "2026-10-02",
+  "source": "Demo dataset"
+ },
+ {
+  "id": "demo-22",
+  "title": "Software Developer Intern",
+  "company": "Cobalt Fintech (fictional)",
+  "location": "Paris",
+  "description": "Develop features of our payment platform in JavaScript/TypeScript and React, REST APIs, Git, agile Scrum team. Python knowledge is a plus. English.",
+  "url": "",
+  "posted": "2026-10-03",
+  "source": "Demo dataset"
+ }
+]

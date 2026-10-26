@@ -1,0 +1,16 @@
+# Core app (enough to run Landed in "fallback" mode: TF-IDF matching + template letters)
+fastapi>=0.110
+uvicorn>=0.27
+python-multipart>=0.0.9
+pydantic>=2.5
+pypdf>=4.0
+python-docx>=1.1
+scikit-learn>=1.3
+numpy>=1.26
+requests>=2.31
+
+# AI models (open source, run locally) - recommended
+sentence-transformers>=3.0     # semantic matching (all-MiniLM-L6-v2)
+transformers>=4.45             # local LLM (Qwen2.5-1.5B-Instruct)
+torch>=2.2
+accelerate>=0.30
