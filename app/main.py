@@ -54,9 +54,6 @@ def status():
         "llm": generator.active_backend(),
         "llm_model": generator.OLLAMA_MODEL if generator.active_backend() == "ollama" else generator.HF_MODEL,
         "adzuna": sources.adzuna_available(),
-        "arbeitnow": True,
-        "france_travail": sources.france_travail_available(),
-        "mycareersfuture": True,
         "cv": bool(_cv),
     }
 
@@ -86,7 +83,7 @@ def sample_cv():
 
 # ------------------------------------------------------------------ offers
 class SearchReq(BaseModel):
-    source: str = "demo"  # demo | adzuna | arbeitnow | france_travail | mycareersfuture
+    source: str = "demo"  # demo | adzuna
     keywords: str = ""
     location: str = ""
 
@@ -108,21 +105,6 @@ def search(req: SearchReq):
             offers = sources.search_adzuna(req.keywords or " ".join(cv["skills"][:2]), req.location)
         except Exception as e:  # noqa: BLE001
             raise HTTPException(502, f"Adzuna search failed: {e}")
-    elif req.source == "arbeitnow":
-        try:
-            offers = sources.search_arbeitnow(req.keywords or " ".join(cv["skills"][:2]), req.location)
-        except Exception as e:  # noqa: BLE001
-            raise HTTPException(502, f"Arbeitnow search failed: {e}")
-    elif req.source == "france_travail":
-        try:
-            offers = sources.search_france_travail(req.keywords or " ".join(cv["skills"][:2]), req.location)
-        except Exception as e:  # noqa: BLE001
-            raise HTTPException(502, f"France Travail search failed: {e}")
-    elif req.source == "mycareersfuture":
-        try:
-            offers = sources.search_mycareersfuture(req.keywords or " ".join(cv["skills"][:2]), req.location)
-        except Exception as e:  # noqa: BLE001
-            raise HTTPException(502, f"MyCareersFuture search failed: {e}")
     else:
         offers = sources.demo_offers()
         if req.keywords:

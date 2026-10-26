@@ -20,7 +20,7 @@
   const SECTION_NAMES = { header: "Header", summary: "Profile", education: "Education", experience: "Experience",
     projects: "Projects", skills: "Skills", languages: "Languages", activities: "Activities" };
 
-  const state = { cv: null, offers: [], selected: null, generated: {}, apps: [], source: "arbeitnow", view: "profile" };
+  const state = { cv: null, offers: [], selected: null, generated: {}, apps: [], source: "demo", view: "profile" };
 
   // ------------------------------------------------------------------ helpers
   async function api(path, opts = {}) {
@@ -120,10 +120,8 @@
       const ok = s.embeddings === "sentence-transformers" && s.llm !== "template";
       $("#engine").innerHTML = `<i class="${ok ? "" : "fallback"}"></i>Matching: ${esc(emb)}. Writing: ${esc(llmName)}`;
       $("#engine").title = ok ? "Running fully on open-source models" : "Running in fallback mode: see README to install the models";
-      if (!s.adzuna) { $('[data-src="adzuna"]').title = "Add your free Adzuna keys in .env to search live offers"; }
-      if (!s.france_travail) { $('[data-src="france_travail"]').title = "Add your free France Travail keys in .env to search live offers"; }
+      if (!s.adzuna) { $('[data-src="adzuna"]').title = "Add your free Adzuna keys in .env to search live offers (adzuna.com)"; }
       state.adzuna = s.adzuna;
-      state.france_travail = s.france_travail;
     } catch (_) { /* server not ready */ }
   }
 
@@ -200,11 +198,7 @@
   // ------------------------------------------------------------------ offers
   $$(".toggle button").forEach((b) => b.addEventListener("click", () => {
     if (b.dataset.src === "adzuna" && !state.adzuna) {
-      toast("Live search needs free Adzuna keys in the .env file (see README).", true);
-      return;
-    }
-    if (b.dataset.src === "france_travail" && !state.france_travail) {
-      toast("France Travail search needs free API keys in the .env file (francetravail.io).", true);
+      toast("Live search needs free Adzuna keys in the .env file — see adzuna.com/developer.", true);
       return;
     }
     state.source = b.dataset.src;
