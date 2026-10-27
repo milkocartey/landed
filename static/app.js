@@ -94,21 +94,14 @@
   // ------------------------------------------------------------------ navigation
   function go(view) {
     if (view !== "profile" && !state.cv) {
-      toast("Add your CV first — Landed needs your CV to find matching offers.");
+      toast("Add your CV first — Landed needs it to find matching offers.");
       view = "profile";
     }
     state.view = view;
-    // Main nav: "Profile" tab is active for both profile and offers views
-    $$(".step").forEach((b) => {
-      const isProfile = b.dataset.go === "profile" && (view === "profile" || view === "offers");
-      const isBoard   = b.dataset.go === "board" && view === "board";
-      b.setAttribute("aria-current", (isProfile || isBoard) ? "page" : "false");
-    });
+    $$(".step[data-go]").forEach((b) => b.setAttribute("aria-current", b.dataset.go === view ? "page" : "false"));
     $$(".view").forEach((v) => (v.hidden = v.dataset.view !== view));
     const el = $(`#view-${view}`);
-    anim(el, { opacity: [0, 1], y: [8, 0] }, { duration: 0.3, ease: "easeOut" });
-    // Zone nav: update active state
-    $$(".zone-btn[data-go]").forEach((b) => b.classList.toggle("active", b.dataset.go === view));
+    anim(el, { opacity: [0, 1], y: [6, 0] }, { duration: 0.22, ease: "easeOut" });
     if (view === "board") loadBoard();
     if (view === "offers" && !state.offers.length) runSearch();
     if (view !== "offers") window.scrollTo({ top: 0 });
@@ -171,7 +164,8 @@
     drop.querySelector("strong").textContent = "Reading your CV…";
     try {
       renderProfile(await api("/api/cv", { method: "POST", body: fd }));
-      toast("CV read. Next: find matching offers.");
+      toast("CV loaded — finding your best matches…");
+      go("offers");
     } catch (err) {
       toast(err.message, true);
     } finally {
@@ -185,8 +179,11 @@
   ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove("over")));
   drop.addEventListener("drop", (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) uploadCV(f); });
   $("#sample-cv").addEventListener("click", async () => {
-    try { renderProfile(await api("/api/cv/sample", { method: "POST" })); toast("Sample CV loaded."); }
-    catch (err) { toast(err.message, true); }
+    try {
+      renderProfile(await api("/api/cv/sample", { method: "POST" }));
+      toast("Sample CV loaded — finding matches…");
+      go("offers");
+    } catch (err) { toast(err.message, true); }
   });
 
   $("#replace-cv").addEventListener("click", () => $("#cv-file").click());
@@ -202,9 +199,10 @@
     if (!text) { toast("Paste some text first.", true); return; }
     try {
       renderProfile(await api("/api/cv/text", { json: { text } }));
-      toast("CV read. Next: find matching offers.");
+      toast("CV loaded — finding your best matches…");
       $("#cv-paste-area").hidden = true;
       $("#cv-text").value = "";
+      go("offers");
     } catch (err) { toast(err.message, true); }
   });
 
@@ -677,8 +675,11 @@
     playTeaser();
     try {
       const cv = await api("/api/cv");
-      if (cv && cv.skills) renderProfile(cv);
+      if (cv && cv.skills) {
+        renderProfile(cv);
+        go("offers"); // return visit: skip onboarding, go straight to offers
+      }
       await refreshApps();
-    } catch (_) { /* first launch */ }
+    } catch (_) { /* first launch — stay on onboarding screen */ }
   })();
 })();
