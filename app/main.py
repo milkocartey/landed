@@ -1,8 +1,10 @@
 """Landed - FastAPI server. Run with:  python -m app.main  (then open http://localhost:8000)"""
 from __future__ import annotations
 
+import asyncio
 import json
 import os
+import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -20,6 +22,7 @@ def _load_env():
 _load_env()
 
 from fastapi import FastAPI, File, HTTPException, UploadFile  # noqa: E402
+from fastapi.concurrency import run_in_threadpool  # noqa: E402
 from fastapi.responses import FileResponse, Response  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
@@ -109,6 +112,19 @@ class ManualReq(BaseModel):
     source: str = "Manual"
 
 
+def _norm(s: str) -> str:
+    """Lowercase + strip accents for accent-insensitive comparison."""
+    return "".join(
+        c for c in unicodedata.normalize("NFD", s.lower())
+        if unicodedata.category(c) != "Mn"
+    )
+
+
+def _loc_match(offer: dict, loc_norm: str) -> bool:
+    o_loc = _norm(offer.get("location", "") or "")
+    return loc_norm in o_loc or "remote" in o_loc
+
+
 @app.post("/api/offers/search")
 def search(req: SearchReq):
     cv = _need_cv()
@@ -119,18 +135,39 @@ def search(req: SearchReq):
             raise HTTPException(502, f"Adzuna search failed: {e}")
     else:
         offers = sources.demo_offers()
+        if req.location:
+            loc_norm = _norm(req.location)
+            loc_filtered = [o for o in offers if _loc_match(o, loc_norm)]
+            if loc_filtered:
+                offers = loc_filtered
         if req.keywords:
             kws = [k.lower() for k in req.keywords.split()]
             filtered = [o for o in offers if any(k in matcher.offer_text(o).lower() for k in kws)]
-            offers = filtered or offers
-    return {"offers": matcher.rank_offers(cv["raw_text"], cv["skills"], offers)}
+            offers = filtered  # return empty list if no keyword match (honest empty state)
+
+    ranked = matcher.rank_offers(cv["raw_text"], cv["skills"], offers)
+
+    # Annotate each offer with bias flag count for the UI badge
+    for o in ranked:
+        r = bias_mod.analyze_offer(o.get("description", ""))
+        legal_count = len(r["legal"])
+        excl_count = len(r["exclusionary"])
+        o["flags_count"] = legal_count + excl_count
+        o["flags_legal"] = legal_count
+
+    return {"offers": ranked}
 
 
 @app.post("/api/offers/manual")
 def manual(req: ManualReq):
     cv = _need_cv()
     o = sources.manual_offer(req.title, req.company, req.description, req.url, req.location, req.source)
-    return {"offer": matcher.rank_offers(cv["raw_text"], cv["skills"], [o])[0]}
+    ranked = matcher.rank_offers(cv["raw_text"], cv["skills"], [o])
+    offer = ranked[0]
+    r = bias_mod.analyze_offer(offer.get("description", ""))
+    offer["flags_count"] = len(r["legal"]) + len(r["exclusionary"])
+    offer["flags_legal"] = len(r["legal"])
+    return {"offer": offer}
 
 
 # ------------------------------------------------------------------ generation
@@ -139,15 +176,30 @@ class GenReq(BaseModel):
 
 
 @app.post("/api/generate")
-def generate(req: GenReq):
+async def generate(req: GenReq):
     cv = _need_cv()
     o = req.offer
     matched, missing = o.get("matched_skills", []), o.get("missing_skills", [])
-    return {
-        "cv": generator.tailor_cv(cv, o, matched),
-        "letter": generator.cover_letter(cv, o, matched, missing),
-        "engine": generator.active_backend(),
-    }
+
+    def _gen():
+        return {
+            "cv": generator.tailor_cv(cv, o, matched),
+            "letter": generator.cover_letter(cv, o, matched, missing),
+            "engine": generator.active_backend(),
+        }
+
+    try:
+        return await asyncio.wait_for(run_in_threadpool(_gen), timeout=90.0)
+    except asyncio.TimeoutError:
+        return {
+            "cv": generator._template_cv(cv, o, matched),
+            "letter": {
+                "text": generator._template_letter(cv, o, matched, missing),
+                "flags": [],
+                "engine": "template (90s timeout — paste your own text to edit)",
+            },
+            "engine": "template",
+        }
 
 
 class CvExport(BaseModel):

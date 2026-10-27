@@ -77,8 +77,9 @@ def _hf_generate(messages: list[dict], max_new_tokens: int) -> str:
             _pipe = pipeline("text-generation", model=HF_MODEL,
                              torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
                              device_map="auto")
-    out = _pipe(messages, max_new_tokens=max_new_tokens, do_sample=True,
-                temperature=0.6, top_p=0.9, return_full_text=False)
+    # Greedy decoding (do_sample=False) is ~2× faster than sampling on CPU
+    out = _pipe(messages, max_new_tokens=max_new_tokens, do_sample=False,
+                return_full_text=False)
     gen = out[0]["generated_text"]
     if isinstance(gen, list):  # some transformers versions return the whole chat
         gen = gen[-1]["content"]
@@ -129,8 +130,22 @@ def guard(text: str, cv_skills: list[str]) -> list[str]:
     return flagged
 
 
-# --------------------------------------------------------------------------- CV
+# --------------------------------------------------------------------------- CV helpers
 BULLET = "-•*–▪"
+
+
+def _cv_for_prompt(cv: dict, max_chars: int = 900) -> str:
+    """Extract the most useful CV text for a generation prompt (short summary + experience)."""
+    parts: list[str] = []
+    sections = cv.get("sections", {})
+    if cv.get("name"):
+        parts.append(cv["name"])
+    for item in (sections.get("summary") or [])[:2]:
+        parts.append(item)
+    for item in (sections.get("experience") or [])[:14]:
+        parts.append(item)
+    result = "\n".join(parts)[:max_chars]
+    return result or cv.get("raw_text", "")[:max_chars]
 
 
 def _is_bullet(line: str) -> bool:
@@ -167,6 +182,31 @@ def _bullets(cv: dict) -> list[str]:
             if _is_bullet(l)]
 
 
+def _template_cv(cv: dict, offer: dict, matched: list[str]) -> dict:
+    """Template-only CV tailoring — no LLM call, used as fallback on timeout."""
+    cv_skills = cv.get("skills", [])
+    focus = ", ".join(matched[:4]) if matched else ", ".join(cv_skills[:4])
+    summary = (f"Motivated student seeking a {offer.get('title', 'internship').lower()} position, "
+               f"bringing hands-on experience in {focus}. Eager to contribute to "
+               f"{offer.get('company', 'your team')} and keep learning in a demanding environment.")
+    otext = offer_text(offer)
+    sections = cv.get("sections", {})
+    skills_first = [s for s in cv_skills if s in matched] + [s for s in cv_skills if s not in matched]
+    order = ["experience", "projects", "education", "activities", "languages"]
+    tailored_sections = {}
+    for key in order + [k for k in sections if k not in order and k not in ("header", "skills", "summary")]:
+        if key in sections and key not in ("header", "skills", "summary"):
+            tailored_sections[key] = _rank_lines(sections[key], otext)
+    return {
+        "header": sections.get("header", [])[:4],
+        "summary": summary,
+        "skills": skills_first,
+        "highlighted_skills": [s for s in skills_first if s in matched],
+        "sections": tailored_sections,
+        "flags": [],
+    }
+
+
 def tailor_cv(cv: dict, offer: dict, matched: list[str]) -> dict:
     otext = offer_text(offer)
     sections = cv.get("sections", {})
@@ -179,10 +219,10 @@ def tailor_cv(cv: dict, offer: dict, matched: list[str]) -> dict:
         {"role": "user", "content": (
             f"Write a 2-sentence CV profile summary (max 55 words) for this candidate, "
             f"targeted at the offer. Mention only skills from this list: {', '.join(matched or cv_skills[:6])}.\n\n"
-            f"OFFER: {offer.get('title')} at {offer.get('company')}\n{offer.get('description', '')[:1200]}\n\n"
-            f"CV:\n{cv.get('raw_text', '')[:2500]}\n\nReturn only the summary text.")},
+            f"OFFER: {offer.get('title')} at {offer.get('company')}\n{offer.get('description', '')[:600]}\n\n"
+            f"CV:\n{_cv_for_prompt(cv, 900)}\n\nReturn only the summary text.")},
     ]
-    summary = llm(msgs, 120)
+    summary = llm(msgs, 80)
     if not summary:
         focus = ", ".join(matched[:4]) if matched else ", ".join(cv_skills[:4])
         summary = (f"Motivated student seeking a {offer.get('title', 'internship').lower()} position, "
@@ -216,17 +256,16 @@ def cover_letter(cv: dict, offer: dict, matched: list[str], missing: list[str]) 
     msgs = [
         {"role": "system", "content": SYSTEM},
         {"role": "user", "content": (
-            "Write a concise cover letter (220-280 words, 4 short paragraphs) for this internship.\n"
+            "Write a concise cover letter (180-240 words, 4 short paragraphs) for this internship.\n"
             "Paragraph 1: why this company and role. Paragraph 2 and 3: two concrete experiences "
             "from the CV that prove the matching skills. Paragraph 4: availability and polite closing.\n"
-            f"Matching skills you may highlight: {', '.join(matched) or 'none'}.\n"
-            f"Skills the candidate does NOT have (do not claim them, at most show willingness to learn one): "
-            f"{', '.join(missing) or 'none'}.\n"
+            f"Matching skills: {', '.join(matched) or 'none'}.\n"
+            f"Skills NOT in CV (do not claim them): {', '.join(missing) or 'none'}.\n"
             f"Start with 'Dear Hiring Team,' and sign with '{name}'.\n\n"
-            f"OFFER: {offer.get('title')} at {offer.get('company')} ({offer.get('location', '')})\n"
-            f"{offer.get('description', '')[:1500]}\n\nCV:\n{cv.get('raw_text', '')[:3000]}")},
+            f"OFFER: {offer.get('title')} at {offer.get('company')}\n"
+            f"{offer.get('description', '')[:500]}\n\nCV:\n{_cv_for_prompt(cv, 800)}")},
     ]
-    text = llm(msgs, 520)
+    text = llm(msgs, 300)
     used = "llm"
     if not text:
         used = "template"
