@@ -17,6 +17,19 @@ from .bias_lexicon import EXCLUSIONARY, GENDER_CODED_FEM, GENDER_CODED_MASC, LEG
 # 3a — Wording check
 # ---------------------------------------------------------------------------
 
+def _dedup_matches(matches: list[dict]) -> list[dict]:
+    """Remove dominated matches — if match A's text is a substring of match B's text, drop A."""
+    result = []
+    for i, m in enumerate(matches):
+        dominated = any(
+            m["match"].lower() in other["match"].lower() and len(other["match"]) > len(m["match"])
+            for j, other in enumerate(matches) if j != i
+        )
+        if not dominated:
+            result.append(m)
+    return result
+
+
 def analyze_offer(description: str) -> dict:
     """
     Scan the offer description against all three lexicon categories.
@@ -25,8 +38,8 @@ def analyze_offer(description: str) -> dict:
       {
         "legal":        [{"match": str, "explanation": str, "suggestion": str}, ...],
         "exclusionary": [...],
-        "gender_masc":  [stem, ...],  # stems that matched
-        "gender_fem":   [stem, ...],
+        "gender_masc":  [word, ...],  # actual words found
+        "gender_fem":   [word, ...],
         "gender_note":  str,
       }
     """
@@ -39,6 +52,7 @@ def analyze_offer(description: str) -> dict:
                 "explanation": rule["explanation"],
                 "suggestion": rule["suggestion"],
             })
+    legal = _dedup_matches(legal)
 
     exclusionary = []
     for rule in EXCLUSIONARY:
@@ -49,15 +63,20 @@ def analyze_offer(description: str) -> dict:
                 "explanation": rule["explanation"],
                 "suggestion": rule["suggestion"],
             })
+    exclusionary = _dedup_matches(exclusionary)
 
-    gender_masc = [
-        stem for stem in GENDER_CODED_MASC
-        if re.search(r"\b" + stem, description, re.IGNORECASE)
-    ]
-    gender_fem = [
-        stem for stem in GENDER_CODED_FEM
-        if re.search(r"\b" + stem, description, re.IGNORECASE)
-    ]
+    # Return actual words found, not stems
+    gender_masc = []
+    for stem in GENDER_CODED_MASC:
+        m = re.search(r"\b" + stem + r"\w*", description, re.IGNORECASE)
+        if m:
+            gender_masc.append(m.group(0))
+
+    gender_fem = []
+    for stem in GENDER_CODED_FEM:
+        m = re.search(r"\b" + stem + r"\w*", description, re.IGNORECASE)
+        if m:
+            gender_fem.append(m.group(0))
 
     nm, nf = len(gender_masc), len(gender_fem)
     if nm == 0 and nf == 0:
@@ -91,26 +110,42 @@ def analyze_offer(description: str) -> dict:
 # 3b — Counterfactual fairness test (Amazon replay)
 # ---------------------------------------------------------------------------
 
-# Name variants: (male-coded, female-coded, neutral/ambiguous).
-# Culturally diverse to test for both gender and origin associations.
-_NAME_VARIANTS = [
-    ("Alexandre Martin", "Alexandra Martin", "Alex Martin"),
-    ("Thomas Dubois", "Théodora Dubois", "T. Dubois"),
-    ("Mohammed Belkacem", "Fatima Belkacem", "M. Belkacem"),
-    ("Pierre Lefebvre", "Marie Lefebvre", "P. Lefebvre"),
+# Six test names: 3 gender pairs × 3 perceived origins (French, Maghrebi, East-Asian).
+# Inspired by counterfactual fairness literature (cf. Amazon 2018 incident, Reuters).
+# These cover both gender-coding and origin-coding in embeddings.
+_TEST_NAMES = [
+    ("Thomas Martin",   "M"),  # French-origin, masc
+    ("Julie Martin",    "F"),  # French-origin, fem
+    ("Mohamed Benali",  "M"),  # Maghrebi-origin, masc
+    ("Leïla Benali",    "F"),  # Maghrebi-origin, fem
+    ("Kevin Nguyen",    "M"),  # East-Asian-origin, masc
+    ("Linh Nguyen",     "F"),  # East-Asian-origin, fem
 ]
+
+_MASC_PRONOUNS = re.compile(r"\b(he|his|him)\b", re.I)
+_FEM_PRONOUNS  = re.compile(r"\b(she|her|hers)\b", re.I)
 
 _BIAS_THRESHOLD = 3  # points — delta above this triggers "possible_bias"
 
 
+def _swap_pronouns(text: str, to_gender: str) -> str:
+    """Replace gendered pronouns when swapping to a different gender."""
+    if to_gender == "F":
+        return _MASC_PRONOUNS.sub(lambda m: {"he": "she", "his": "her", "him": "her"}[m.group(0).lower()], text)
+    return _FEM_PRONOUNS.sub(lambda m: {"she": "he", "her": "his", "hers": "his"}[m.group(0).lower()], text)
+
+
 def counterfactual_test(cv: dict, offer: dict, matcher_module) -> dict:
     """
-    Amazon-replay fairness test: re-run the matching score with the candidate
-    name swapped across a male / female / gender-neutral triple, keeping every
-    other signal identical.
+    Counterfactual fairness test: re-run matching with 6 name variants covering
+    gender and perceived ethnic origin, keeping every other signal identical.
 
-    A score delta > _BIAS_THRESHOLD suggests the embedding encodes cultural
-    associations of the name rather than pure skill signals.
+    Inspired by the mechanism that caused Amazon's recruiting AI to downgrade
+    CVs containing the word 'women's' (Reuters, Oct 2018), but does NOT claim
+    to replicate that specific experiment.
+
+    A score delta > _BIAS_THRESHOLD suggests the embedding may encode cultural
+    associations beyond pure skill signals.
 
     Returns:
       {
@@ -121,25 +156,21 @@ def counterfactual_test(cv: dict, offer: dict, matcher_module) -> dict:
       }
     """
     base_name: str = cv.get("name", "")
-
-    # Pick the variant set whose first element most closely matches the CV name
-    chosen = _NAME_VARIANTS[0]
-    first_word = (base_name or "").split()[0].lower()
-    for trio in _NAME_VARIANTS:
-        if any(n.split()[0].lower() == first_word for n in trio):
-            chosen = trio
-            break
+    base_raw: str = cv.get("raw_text", "")
 
     results = []
-    for name in chosen:
+    for name, gender in _TEST_NAMES:
         patched = copy.deepcopy(cv)
         patched["name"] = name
 
-        raw: str = patched.get("raw_text", "")
+        raw = base_raw
         if base_name and base_name in raw:
-            patched["raw_text"] = raw.replace(base_name, name, 1)
+            raw = raw.replace(base_name, name)  # replace ALL occurrences
         elif raw:
-            patched["raw_text"] = name + "\n" + raw
+            raw = name + "\n" + raw
+
+        raw = _swap_pronouns(raw, gender)
+        patched["raw_text"] = raw
 
         ranked = matcher_module.rank_offers(
             patched["raw_text"],
@@ -161,9 +192,9 @@ def counterfactual_test(cv: dict, offer: dict, matcher_module) -> dict:
     if delta <= _BIAS_THRESHOLD:
         verdict = "fair"
         explanation = (
-            f"Score delta across {n} name variants: {delta} point(s). "
-            "The matching model is not materially influenced by the candidate's apparent name or gender — "
-            "this reproduces the Amazon fairness test."
+            f"Score delta across {n} name variants (3 gender pairs, 3 origins): {delta} point(s). "
+            "The matching model shows no material sensitivity to the candidate's apparent name, "
+            "gender, or ethnic origin — a good signal for algorithmic fairness."
         )
     else:
         best = results[scores.index(max(scores))]["name"]
@@ -172,9 +203,9 @@ def counterfactual_test(cv: dict, offer: dict, matcher_module) -> dict:
         explanation = (
             f"Score delta across {n} name variants: {delta} point(s) "
             f"(highest: {best} → {max(scores)}, lowest: {worst} → {min(scores)}). "
-            f"A delta above {_BIAS_THRESHOLD} suggests the embedding may encode cultural "
-            "associations tied to names — the same mechanism that caused Amazon's recruiting AI to "
-            "downgrade CVs containing the word 'women's' (Reuters, Oct 2018)."
+            f"A delta above {_BIAS_THRESHOLD} points suggests the embedding may encode cultural "
+            "associations beyond pure skill signals. "
+            "This does not definitively prove discrimination — it is a signal worth investigating."
         )
 
     return {
