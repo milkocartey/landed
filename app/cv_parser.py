@@ -9,14 +9,20 @@ from .skills import extract_skills
 
 SECTION_HEADINGS = {
     "summary": ["summary", "profile", "about me", "objective", "profil"],
-    "education": ["education", "academic background", "formation", "studies"],
+    "education": ["education", "academic background", "formation", "studies", "formations",
+                  "diplômes"],
     "experience": ["experience", "experiences", "work experience", "professional experience",
-                   "internships", "employment", "expérience professionnelle", "expériences"],
+                   "internships", "employment", "expérience professionnelle", "expériences",
+                   "expérience", "professional experiences"],
     "projects": ["projects", "academic projects", "personal projects", "projets"],
-    "skills": ["skills", "technical skills", "competences", "compétences", "tools"],
-    "languages": ["languages", "langues"],
+    "skills": ["skills", "technical skills", "competences", "compétences", "tools",
+               "skills tools", "compétences outils", "skills and tools",
+               "technical skills and tools", "certifications"],
+    "languages": ["languages", "langues", "langues et certifications",
+                  "languages and certifications", "langues certifications"],
     "activities": ["activities", "extracurricular", "associations", "interests", "hobbies",
-                   "leadership", "volunteering", "centres d'intérêt"],
+                   "leadership", "volunteering", "centres d'intérêt", "activités",
+                   "activités extrascolaires", "engagements"],
 }
 
 
@@ -47,8 +53,12 @@ def read_file(filename: str, data: bytes) -> str:
 
 
 def _heading_key(line: str) -> str | None:
-    clean = re.sub(r"[^a-zA-Zéèàç' ]", "", line).strip().lower()
-    if not clean or len(clean) > 40:
+    # Lowercase first so accented capitals (É → é) fall into the allowed set
+    lower = line.strip().lower()
+    # Replace non-alpha (incl. &, /, –) with spaces so "skills & tools" → "skills tools"
+    clean = re.sub(r"[^a-zéèàç' ]", " ", lower)
+    clean = re.sub(r"\s+", " ", clean).strip()
+    if not clean or len(clean) > 55:
         return None
     for key, names in SECTION_HEADINGS.items():
         if clean in names:
