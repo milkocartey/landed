@@ -138,6 +138,25 @@ def demo_offers() -> list[dict]:
         return json.load(f)
 
 
+_FR_DATASET_PATH = DATA / "offers_fr.json"
+_fr_dataset_cache: list[dict] | None = None
+
+
+def fr_dataset_available() -> bool:
+    return _FR_DATASET_PATH.exists()
+
+
+def fr_dataset_offers() -> list[dict]:
+    """3,100 real French alternance/internship offers (Jan-Jun 2026), built from the
+    France-Travail-ML HuggingFace dataset by scripts/build_offers_dataset.py.
+    Loaded once and cached in memory (file is ~6 MB)."""
+    global _fr_dataset_cache
+    if _fr_dataset_cache is None:
+        with open(_FR_DATASET_PATH, encoding="utf-8") as f:
+            _fr_dataset_cache = json.load(f)
+    return _fr_dataset_cache
+
+
 def manual_offer(title: str, company: str, description: str, url: str = "",
                  location: str = "", source: str = "Manual") -> dict:
     return {

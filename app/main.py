@@ -59,6 +59,7 @@ def status():
         "llm_model": generator.OLLAMA_MODEL if generator.active_backend() == "ollama" else generator.HF_MODEL,
         "adzuna": sources.adzuna_available(),
         "france_travail": sources.france_travail_available(),
+        "fr_dataset": sources.fr_dataset_available(),
         "cv": bool(_cv),
     }
 
@@ -99,7 +100,7 @@ def upload_cv_text(req: CvTextReq):
 
 # ------------------------------------------------------------------ offers
 class SearchReq(BaseModel):
-    source: str = "demo"  # demo | adzuna
+    source: str = "demo"  # demo | adzuna | france_travail | fr_dataset
     keywords: str = ""
     location: str = ""
 
@@ -126,9 +127,26 @@ def _loc_match(offer: dict, loc_norm: str) -> bool:
     return loc_norm in o_loc or "remote" in o_loc
 
 
+def _filter_local(offers: list[dict], keywords: str, location: str) -> list[dict]:
+    """Keyword/location filtering for local JSON datasets (demo, fr_dataset) that
+    have no search API of their own to pass the query to."""
+    if location:
+        loc_norm = _norm(location)
+        loc_filtered = [o for o in offers if _loc_match(o, loc_norm)]
+        if loc_filtered:
+            offers = loc_filtered
+    if keywords:
+        kws = [k.lower() for k in keywords.split()]
+        offers = [o for o in offers if any(k in matcher.offer_text(o).lower() for k in kws)]
+        # return empty list if no keyword match (honest empty state)
+    return offers
+
+
 @app.post("/api/offers/search")
 def search(req: SearchReq):
     cv = _need_cv()
+    doc_embeddings = None
+    offer_skills = None
     if req.source == "adzuna":
         try:
             offers = sources.search_adzuna(req.keywords or " ".join(cv["skills"][:2]), req.location)
@@ -140,19 +158,27 @@ def search(req: SearchReq):
             offers = sources.search_france_travail(kw, req.location)
         except Exception as e:  # noqa: BLE001
             raise HTTPException(502, f"France Travail search failed: {e}")
+    elif req.source == "fr_dataset":
+        if not sources.fr_dataset_available():
+            raise HTTPException(400, "The France 2026 dataset isn't built yet — run scripts/build_offers_dataset.py --build.")
+        all_offers = sources.fr_dataset_offers()
+        full_embeddings = matcher.cached_embeddings(all_offers, "offers_fr")
+        full_skills = matcher.cached_offer_skills(all_offers, "offers_fr")
+        offers = _filter_local(all_offers, req.keywords, req.location)
+        if len(offers) != len(all_offers):
+            # keep the cached vectors/skills lined up with the filtered subset
+            # instead of recomputing: slice by each kept offer's position in the
+            # full list
+            id_to_idx = {o["id"]: i for i, o in enumerate(all_offers)}
+            idx = [id_to_idx[o["id"]] for o in offers]
+            doc_embeddings = full_embeddings[idx] if full_embeddings is not None else None
+            offer_skills = [full_skills[i] for i in idx]
+        else:
+            doc_embeddings, offer_skills = full_embeddings, full_skills
     else:
-        offers = sources.demo_offers()
-        if req.location:
-            loc_norm = _norm(req.location)
-            loc_filtered = [o for o in offers if _loc_match(o, loc_norm)]
-            if loc_filtered:
-                offers = loc_filtered
-        if req.keywords:
-            kws = [k.lower() for k in req.keywords.split()]
-            filtered = [o for o in offers if any(k in matcher.offer_text(o).lower() for k in kws)]
-            offers = filtered  # return empty list if no keyword match (honest empty state)
+        offers = _filter_local(sources.demo_offers(), req.keywords, req.location)
 
-    ranked = matcher.rank_offers(cv["raw_text"], cv["skills"], offers)
+    ranked = matcher.rank_offers(cv["raw_text"], cv["skills"], offers, doc_embeddings, offer_skills)
 
     # Annotate each offer with bias flag count for the UI badge
     for o in ranked:

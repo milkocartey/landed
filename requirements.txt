@@ -14,3 +14,6 @@ sentence-transformers>=3.0     # semantic matching (all-MiniLM-L6-v2)
 transformers>=4.45             # local LLM (Qwen2.5-1.5B-Instruct)
 torch>=2.2
 accelerate>=0.30
+
+# Build scripts (not needed at app runtime)
+pyarrow>=14.0                  # read parquet from HuggingFace datasets

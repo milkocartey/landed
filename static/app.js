@@ -117,9 +117,11 @@
       const s = await api("/api/status");
       state.adzuna = s.adzuna;
       state.france_travail = s.france_travail;
+      state.fr_dataset = s.fr_dataset;
       // Hide live sources if keys not configured
       if (!s.adzuna) $('[data-src="adzuna"]')?.setAttribute("disabled", "true");
       if (!s.france_travail) $('[data-src="france_travail"]')?.setAttribute("disabled", "true");
+      if (!s.fr_dataset) $('[data-src="fr_dataset"]')?.setAttribute("disabled", "true");
     } catch (_) { /* server not ready */ }
   }
 
@@ -259,6 +261,10 @@
     }
     if (b.dataset.src === "france_travail" && !state.france_travail) {
       toast("France Travail needs API keys in .env — register free at francetravail.io/data/api.", true);
+      return;
+    }
+    if (b.dataset.src === "fr_dataset" && !state.fr_dataset) {
+      toast("Dataset not built yet — run scripts/build_offers_dataset.py --build.", true);
       return;
     }
     state.source = b.dataset.src;

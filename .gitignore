@@ -4,3 +4,6 @@ __pycache__/
 .venv/
 data/landed.db
 data/cv.json
+data/_hf_cache/
+data/*_emb.npy
+data/*_emb_ids.json
