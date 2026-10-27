@@ -115,8 +115,15 @@
   async function loadStatus() {
     try {
       const s = await api("/api/status");
-      if (!s.adzuna) { $('[data-src="adzuna"]')?.setAttribute("title", "Add your free Adzuna keys in .env to search live offers (adzuna.com)"); }
       state.adzuna = s.adzuna;
+      if (!s.adzuna) {
+        // No Adzuna keys configured — hide the source toggle entirely
+        const srcField = $('[data-src="adzuna"]')?.closest(".field");
+        if (srcField) srcField.hidden = true;
+        state.source = "demo";
+        $('[data-src="demo"]')?.setAttribute("aria-checked", "true");
+        $('[data-src="adzuna"]')?.setAttribute("aria-checked", "false");
+      }
     } catch (_) { /* server not ready */ }
   }
 
@@ -291,9 +298,10 @@
   function selectOffer(id, scroll = true) {
     const o = state.offers.find((x) => x.id === id);
     if (!o) return;
+    const changed = !state.selected || state.selected.id !== id;
     state.selected = o;
     $$(".offer").forEach((li) => li.setAttribute("aria-selected", li.dataset.id === id ? "true" : "false"));
-    renderDetail(o);
+    if (changed) renderDetail(o);
     if (scroll && window.innerWidth < 960) $("#detail").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
   }
 
@@ -321,15 +329,15 @@
       </div>
       <div id="gen-area"></div>
       <div class="bias-panel" id="bias-panel">
-        <h3>Bias check</h3>
-        <p class="muted" style="margin:2px 0 10px;font-size:14px">Wording analysis (legal risk, exclusionary language, gender coding) and a counterfactual fairness test that replays our own scoring with different candidate names.</p>
+        <h3>Before you apply</h3>
+        <p class="muted" style="margin:2px 0 10px;font-size:14px">Spot red flags before investing time in an application — and check that our own algorithm is treating you fairly.</p>
         <div class="bias-actions">
-          <button class="btn ghost" id="bias-btn">Analyse offer wording</button>
-          <button class="btn ghost" id="cftest-btn">Test our score for bias</button>
+          <button class="btn ghost" id="bias-btn">Red flags in this offer</button>
+          <button class="btn ghost" id="cftest-btn">Is my match score fair?</button>
         </div>
         <div id="bias-result" hidden></div>
       </div>`;
-    anim(d, { opacity: [0.4, 1] }, { duration: 0.2 });
+    anim(d, { opacity: [0, 1], y: [4, 0] }, { duration: 0.18, ease: "easeOut" });
     anim($$(".bar .fill", d), { scaleX: [0, 1] }, { duration: 0.6, ease: "easeOut", delay: stagger(0.1) });
     playRings(d);
     $("#gen-btn").addEventListener("click", () => generate(o));
@@ -413,30 +421,34 @@
   function renderBiasWording(r) {
     const parts = [];
     if (!r.legal.length && !r.exclusionary.length) {
-      parts.push(`<div class="ok">No legal risk or exclusionary wording detected.</div>`);
+      parts.push(`<div class="ok">No red flags detected. The wording looks fair.</div>`);
     }
     if (r.legal.length) {
-      parts.push(`<div class="bias-section legal"><b>Legal risk — ${r.legal.length} flag${r.legal.length > 1 ? "s" : ""}</b>${
+      parts.push(`<div class="bias-section legal"><b>Potentially unfair requirement${r.legal.length > 1 ? "s" : ""}</b>${
         r.legal.map((f) => `<div class="bias-flag">
           <span class="bias-match">${esc(f.match)}</span>
           <p>${esc(f.explanation)}</p>
-          <p class="suggestion">Suggestion: ${esc(f.suggestion)}</p>
+          <p class="suggestion">What this means for you: ${esc(f.suggestion)}</p>
         </div>`).join("")}</div>`);
     }
     if (r.exclusionary.length) {
-      parts.push(`<div class="bias-section excl"><b>Exclusionary wording — ${r.exclusionary.length} flag${r.exclusionary.length > 1 ? "s" : ""}</b>${
+      parts.push(`<div class="bias-section excl"><b>Language requirement — may exclude you</b>${
         r.exclusionary.map((f) => `<div class="bias-flag">
           <span class="bias-match">${esc(f.match)}</span>
           <p>${esc(f.explanation)}</p>
-          <p class="suggestion">Suggestion: ${esc(f.suggestion)}</p>
+          <p class="suggestion">What this means for you: ${esc(f.suggestion)}</p>
         </div>`).join("")}</div>`);
     }
     const hasMasc = r.gender_masc.length > 0, hasFem = r.gender_fem.length > 0;
-    parts.push(`<div class="bias-section gender"><b>Gender-coded wording</b>
-      <p class="muted" style="font-size:14px">${esc(r.gender_note)}</p>
-      ${hasMasc ? `<p style="margin:4px 0">Masculine signals: ${r.gender_masc.map((s) => `<span class="chip flag-masc">${esc(s)}</span>`).join(" ")}</p>` : ""}
-      ${hasFem ? `<p style="margin:4px 0">Feminine signals: ${r.gender_fem.map((s) => `<span class="chip flag-fem">${esc(s)}</span>`).join(" ")}</p>` : ""}
-    </div>`);
+    if (hasMasc || hasFem) {
+      parts.push(`<div class="bias-section gender"><b>Gender-coded language</b>
+        <p class="muted" style="font-size:14px">${esc(r.gender_note)}</p>
+        ${hasMasc ? `<p style="margin:4px 0">Masculine signals: ${r.gender_masc.map((s) => `<span class="chip flag-masc">${esc(s)}</span>`).join(" ")}</p>` : ""}
+        ${hasFem ? `<p style="margin:4px 0">Feminine signals: ${r.gender_fem.map((s) => `<span class="chip flag-fem">${esc(s)}</span>`).join(" ")}</p>` : ""}
+      </div>`);
+    } else {
+      parts.push(`<div class="bias-section gender"><b>Gender-coded language</b><p class="muted" style="font-size:14px">No gender-coded signals detected in this offer.</p></div>`);
+    }
     return parts.join("");
   }
 
@@ -455,7 +467,7 @@
     result.innerHTML = `<p class="muted" style="font-size:14px">Checking wording…</p>`;
     try {
       const r = await api("/api/bias/offer", { json: { description: o.description } });
-      result.innerHTML = `<h4 style="margin:12px 0 8px">Wording analysis</h4>` + renderBiasWording(r);
+      result.innerHTML = `<h4 style="margin:12px 0 8px">Red flag report</h4>` + renderBiasWording(r);
     } catch (err) {
       result.innerHTML = `<div class="warning">${esc(err.message)}</div>`;
     }
@@ -468,7 +480,7 @@
     loader(result);
     try {
       const r = await api("/api/bias/test", { json: { offer: o } });
-      result.innerHTML = `<h4 style="margin:12px 0 8px">Counterfactual fairness test</h4>` + renderCfResult(r);
+      result.innerHTML = `<h4 style="margin:12px 0 8px">Match fairness report</h4>` + renderCfResult(r);
     } catch (err) {
       result.innerHTML = `<div class="warning">${esc(err.message)}</div>`;
     }
