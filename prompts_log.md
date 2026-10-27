@@ -65,3 +65,25 @@ Kept verbatim (original language: French) for the "show us where and how you use
 
 ## 17 — 2026-10-27
 > phase 4
+
+---
+
+## 18 — 2026-10-27 (session 4 — UI redesign)
+> donc comme je l'ai dis on va refaire l'interface. Je veux quelque chose de pro, orienté education avec une petite note tech (dans les transi ou la façon dont l'overlay est fait). Fais de beaux overlays. Pose moi des questions jusqu'a reach clarity
+
+## 19 — 2026-10-27
+> [Answers to 6 design questions:
+> palette: crème/paper (warm neutral);
+> register: grande école / cabinet de conseil;
+> overlay style: glassmorphism;
+> layout reference: Linear.app;
+> font: Playfair Display serif for headings;
+> scope: full redesign]
+
+## 20 — 2026-10-27
+> bah y'a rien qui a changé là
+> [Browser cache issue — fix: Cmd+Shift+R hard reload]
+
+## 21 — 2026-10-27
+> les sous panneaux ont pas de truc pour défilé attitré, on doit descendre tout la page principale pour accéder. Enfaite fais un peu dans le style jobteaser c'est mieux là c'est naze
+> [Two issues: (1) offers split-view has no independent scroll per panel; (2) previous design too editorial/serif-heavy — pivot to JobTeaser style: clean white/light-gray, Inter sans throughout, bright blue accent, modern split-view layout]
