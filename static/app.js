@@ -94,17 +94,24 @@
   // ------------------------------------------------------------------ navigation
   function go(view) {
     if (view !== "profile" && !state.cv) {
-      toast("Add your CV first so Landed knows what to match.");
+      toast("Add your CV first — Landed needs your CV to find matching offers.");
       view = "profile";
     }
     state.view = view;
-    $$(".step").forEach((b) => b.setAttribute("aria-current", b.dataset.go === view ? "page" : "false"));
+    // Main nav: "Profile" tab is active for both profile and offers views
+    $$(".step").forEach((b) => {
+      const isProfile = b.dataset.go === "profile" && (view === "profile" || view === "offers");
+      const isBoard   = b.dataset.go === "board" && view === "board";
+      b.setAttribute("aria-current", (isProfile || isBoard) ? "page" : "false");
+    });
     $$(".view").forEach((v) => (v.hidden = v.dataset.view !== view));
     const el = $(`#view-${view}`);
     anim(el, { opacity: [0, 1], y: [8, 0] }, { duration: 0.3, ease: "easeOut" });
-    if (view === "board") loadBoard(true);
+    // Zone nav: update active state
+    $$(".zone-btn[data-go]").forEach((b) => b.classList.toggle("active", b.dataset.go === view));
+    if (view === "board") loadBoard();
     if (view === "offers" && !state.offers.length) runSearch();
-    window.scrollTo({ top: 0 });
+    if (view !== "offers") window.scrollTo({ top: 0 });
   }
   document.addEventListener("click", (e) => {
     const t = e.target.closest("[data-go]");
@@ -115,12 +122,7 @@
   async function loadStatus() {
     try {
       const s = await api("/api/status");
-      const emb = s.embeddings === "sentence-transformers" ? "MiniLM embeddings" : "TF-IDF (fallback)";
-      const llmName = s.llm === "template" ? "template (no LLM found)" : s.llm_model.split("/").pop();
-      const ok = s.embeddings === "sentence-transformers" && s.llm !== "template";
-      $("#engine").innerHTML = `<i class="${ok ? "" : "fallback"}"></i>Matching: ${esc(emb)}. Writing: ${esc(llmName)}`;
-      $("#engine").title = ok ? "Running fully on open-source models" : "Running in fallback mode: see README to install the models";
-      if (!s.adzuna) { $('[data-src="adzuna"]').title = "Add your free Adzuna keys in .env to search live offers (adzuna.com)"; }
+      if (!s.adzuna) { $('[data-src="adzuna"]')?.setAttribute("title", "Add your free Adzuna keys in .env to search live offers (adzuna.com)"); }
       state.adzuna = s.adzuna;
     } catch (_) { /* server not ready */ }
   }
@@ -528,8 +530,7 @@
   // ------------------------------------------------------------------ board
   async function refreshApps() { state.apps = await api("/api/applications"); }
 
-  async function loadBoard(withTitle) {
-    if (withTitle) flapText($("#board-title"), "DEPARTURES", { asTiles: true });
+  async function loadBoard() {
     try {
       await refreshApps();
       const stats = await api("/api/stats");
@@ -565,7 +566,7 @@
       const items = state.apps.filter((a) => a.status === s.key);
       return `<section class="col" data-status="${s.key}" aria-label="${s.label}">
         <header><span><span class="dot" style="background:${s.dot}"></span>${s.label}</span><span class="count">${items.length}</span></header>
-        <ul>${items.map(cardHTML).join("") || (s.key === "saved" ? `<li class="empty-col">Save offers from step 2 to see them here.</li>` : `<li class="empty-col">Drag a card here.</li>`)}</ul>
+        <ul>${items.map(cardHTML).join("") || (s.key === "saved" ? `<li class="empty-col">Save offers from Matching Offers to see them here.</li>` : `<li class="empty-col">Drag a card here.</li>`)}</ul>
       </section>`;
     }).join("");
     anim($$(".card", board), { opacity: [0, 1], y: [10, 0] }, { delay: stagger(0.03), duration: 0.3 });
@@ -611,7 +612,7 @@
     if (!a || a.status === status) return;
     try {
       await api(`/api/applications/${id}`, { method: "PATCH", json: { status } });
-      await loadBoard(false);
+      await loadBoard();
       const card = $(`.card[data-id="${id}"]`);
       if (card) {
         anim(card, { backgroundColor: ["#F2C230", "#FFFFFF"], scale: [1.04, 1] }, { duration: 0.6 });

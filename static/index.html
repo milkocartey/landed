@@ -17,16 +17,18 @@
       <span>Landed</span>
     </a>
     <nav class="steps" aria-label="Main">
-      <button class="step" data-go="profile" aria-current="page"><b>1</b> Your CV</button>
-      <button class="step" data-go="offers"><b>2</b> Matching offers</button>
-      <button class="step" data-go="board"><b>3</b> Application board</button>
+      <button class="step" data-go="profile" aria-current="page">Profile</button>
+      <button class="step" data-go="board">Applications</button>
     </nav>
-    <div class="engine" id="engine" title="AI engines in use"></div>
   </header>
 
   <main>
     <!-- ======================================================== PROFILE -->
     <section class="view" id="view-profile" data-view="profile">
+      <div class="zone-nav" id="zone-nav-profile">
+        <button class="zone-btn active" data-go="profile">My CV</button>
+        <button class="zone-btn" data-go="offers">Matching Offers</button>
+      </div>
       <div class="hero">
       <div class="intro">
         <h1>Drop your CV. Get offers that fit, a tailored application for each one, and one board to track them all.</h1>
@@ -90,6 +92,10 @@
 
     <!-- ======================================================== OFFERS -->
     <section class="view" id="view-offers" data-view="offers" hidden>
+      <div class="zone-nav offers-zone-nav">
+        <button class="zone-btn" data-go="profile">My CV</button>
+        <button class="zone-btn active" data-go="offers">Matching Offers</button>
+      </div>
       <form class="search" id="search">
         <div class="field grow">
           <label for="q">What are you looking for?</label>
@@ -136,11 +142,18 @@
     <!-- ======================================================== BOARD -->
     <section class="view" id="view-board" data-view="board" hidden>
       <div class="board-head">
-        <h1 class="flap-title" id="board-title" aria-label="Departures">DEPARTURES</h1>
-        <dl class="stats" id="stats"></dl>
+        <div class="board-title-row">
+          <div>
+            <h1 class="board-title">Applications</h1>
+            <p class="board-sub">Track every application — drag cards to update status.</p>
+          </div>
+          <dl class="stats" id="stats"></dl>
+        </div>
+        <div class="followups" id="followups" hidden></div>
       </div>
-      <div class="followups" id="followups" hidden></div>
-      <div class="board" id="board"></div>
+      <div class="board-cols-wrap">
+        <div class="board" id="board"></div>
+      </div>
     </section>
   </main>
 

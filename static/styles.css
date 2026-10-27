@@ -390,50 +390,83 @@ textarea { resize: vertical; line-height: 1.55; }
   background: var(--accent); border-radius: 2px;
 }
 
+/* ------------------------------------------------------------------ zone nav (My CV / Matching Offers sub-tabs) */
+.zone-nav {
+  display: none; /* hidden by default — shown by body.has-cv or offers view */
+  align-items: center; gap: 4px;
+  padding: 12px 0 0;
+}
+body.has-cv .zone-nav { display: flex; }
+#view-offers .zone-nav { display: flex; } /* always show in offers view */
+.offers-zone-nav {
+  flex-shrink: 0;
+  padding: 12px clamp(16px, 4vw, 40px) 0;
+}
+.zone-btn {
+  border: 0; background: none; padding: 8px 16px;
+  border-radius: 999px; cursor: pointer;
+  font: 500 14px/1 var(--text); color: var(--ink-2);
+  transition: background .15s, color .15s;
+}
+.zone-btn:hover { background: var(--surface-2); color: var(--ink); }
+.zone-btn.active {
+  background: var(--accent-pale); color: var(--accent); font-weight: 600;
+}
+
 /* ------------------------------------------------------------------ board */
 .board-head {
-  display: flex; justify-content: space-between; align-items: end;
-  gap: 24px; flex-wrap: wrap;
-  background: var(--board); color: var(--board-text);
-  padding: 26px 30px;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: var(--radius-m) var(--radius-m) 0 0;
+  padding: 22px 24px 0;
 }
-.flap-title {
-  font: 700 clamp(30px, 4.5vw, 48px)/1 'Barlow Condensed', var(--display);
-  letter-spacing: .08em; display: flex; gap: 3px;
+.board-title-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 24px; flex-wrap: wrap; padding-bottom: 20px;
 }
-.flap {
-  display: inline-block; min-width: .78em; text-align: center;
-  color: var(--sign); border-radius: 3px; padding: 6px 3px 4px;
-  background: linear-gradient(#323D52 0 49%, #141B26 49% 51%, #2A3446 51% 100%);
-}
+.board-title { font-size: clamp(22px, 3vw, 30px); font-weight: 800; letter-spacing: -.01em; }
+.board-sub { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
 .stats { display: flex; gap: 24px; margin: 0; flex-wrap: wrap; }
 .stats div { display: grid; }
-.stats dt { font-size: 11px; color: #9AA5B8; order: 2; text-transform: uppercase; letter-spacing: .07em; }
-.stats dd { margin: 0; font: 700 26px/1 var(--display); color: #fff; }
+.stats dt { font-size: 11px; color: var(--ink-2); order: 2; text-transform: uppercase; letter-spacing: .07em; }
+.stats dd { margin: 0; font: 700 24px/1 var(--display); color: var(--ink); }
 .followups {
-  background: var(--warn-bg); border-left: 3px solid #F59E0B;
-  padding: 11px 28px; font-size: 14px;
+  background: var(--warn-bg); border-top: 1px solid #FDE68A;
+  padding: 10px 0; font-size: 14px; margin: 0 -24px;
+  padding-left: 24px; padding-right: 24px;
 }
 .followups button { margin-left: 4px; }
-.board {
-  display: grid; grid-template-columns: repeat(5, minmax(200px, 1fr));
-  gap: 0; overflow-x: auto;
-  background: var(--board);
+.board-cols-wrap {
+  border: 1px solid var(--line); border-top: none;
   border-radius: 0 0 var(--radius-m) var(--radius-m);
-  padding: 0 14px 20px;
+  overflow: hidden;
 }
-.col { min-height: 420px; padding: 0 6px; border-left: 1px solid #2E3A4E; }
+.board {
+  display: grid; grid-template-columns: repeat(5, minmax(180px, 1fr));
+  gap: 0; overflow-x: auto; background: var(--paper);
+  padding: 0;
+}
+.col {
+  min-height: 420px; padding: 0 10px;
+  border-left: 1px solid var(--line);
+  background: var(--paper);
+}
 .col:first-child { border-left: 0; }
 .col header {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 6px 12px; color: var(--board-text);
-  font: 700 12px/1 'Barlow Condensed', var(--display);
-  letter-spacing: .08em; text-transform: uppercase;
+  padding: 14px 0 10px; color: var(--ink-2);
+  font: 600 12px/1 var(--text);
+  letter-spacing: .04em; text-transform: uppercase;
+  border-bottom: 1.5px solid var(--line); margin-bottom: 10px;
 }
-.col header .count { color: #7A8699; font-size: 13px; }
-.col header .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-.col.drag-over { background: rgba(27,110,243,.08); }
+.col header .count {
+  min-width: 20px; height: 20px; border-radius: 10px;
+  background: var(--surface-2); color: var(--ink-2);
+  font-size: 12px; font-weight: 700;
+  display: grid; place-items: center; padding: 0 6px;
+}
+.col header .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.col.drag-over { background: var(--accent-pale); }
 .col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; min-height: 60px; }
 .card {
   background: var(--surface); border-radius: var(--radius-s);
@@ -451,11 +484,11 @@ textarea { resize: vertical; line-height: 1.55; }
 .card .fu { margin-top: 7px; font-size: 11.5px; font-weight: 600; color: #92400E; background: var(--warn-bg); border-radius: 4px; padding: 2px 6px; }
 .card .next { margin-top: 6px; font-size: 12px; }
 .col[data-status="saved"] .card     { border-left-color: #94A3B8; }
-.col[data-status="applied"] .card   { border-left-color: var(--sign); }
+.col[data-status="applied"] .card   { border-left-color: #F59E0B; }
 .col[data-status="interview"] .card { border-left-color: var(--accent); }
 .col[data-status="offer"] .card     { border-left-color: var(--good); }
 .col[data-status="rejected"] .card  { border-left-color: var(--bad); opacity: .75; }
-.col .empty-col { color: #7A8699; font-size: 13px; padding: 6px; }
+.col .empty-col { color: var(--ink-2); font-size: 13px; padding: 6px 0; }
 
 /* ------------------------------------------------------------------ drawers (glassmorphism) */
 .scrim {
@@ -530,6 +563,17 @@ textarea { resize: vertical; line-height: 1.55; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
+/* ------------------------------------------------------------------ flap display (home teaser only) */
+.flap-title {
+  font: 700 clamp(24px, 3.5vw, 36px)/1 'Barlow Condensed', var(--display);
+  letter-spacing: .08em; display: flex; gap: 3px;
+}
+.flap {
+  display: inline-block; min-width: .78em; text-align: center;
+  color: var(--sign); border-radius: 3px; padding: 5px 2px 4px;
+  background: linear-gradient(#323D52 0 49%, #141B26 49% 51%, #2A3446 51% 100%);
+}
+
 /* ------------------------------------------------------------------ home hero */
 .hero {
   display: grid;
@@ -574,6 +618,9 @@ body.has-cv .hero, body.has-cv #drop, body.has-cv .alt { display: none; }
 body:not(.has-cv) .cv-bar { display: none; }
 body.has-cv .profile { margin-top: 20px; }
 body.has-cv .cv-paste-wrap { display: none; }
+
+/* offers view: zone-nav sits above the search bar */
+#view-offers .zone-nav { padding-bottom: 8px; }
 
 /* CV paste toggle */
 .cv-paste-wrap { max-width: 760px; margin-top: 10px; }
