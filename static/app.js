@@ -281,7 +281,7 @@
       <li class="offer" role="option" tabindex="0" data-id="${esc(o.id)}" aria-selected="false">
         ${scoreRing(o.score)}
         <div>
-          <h3>${esc(o.title)}${tracked.has(o.id) ? `<span class="tracked">On your board</span>` : ""}</h3>
+          <h3>${esc(o.title)}${tracked.has(o.id) ? `<span class="tracked">On your board</span>` : ""}${o.flags_count > 0 ? `<span class="flag-badge" title="${o.flags_legal > 0 ? 'Contains potentially illegal wording' : 'Contains exclusionary language'}">⚠ ${o.flags_count} flag${o.flags_count !== 1 ? "s" : ""}</span>` : ""}</h3>
           <p class="meta">${esc(o.company)}${o.location ? ", " + esc(o.location) : ""}</p>
           <div class="chips">${o.matched_skills.slice(0, 4).map((s) => `<span class="chip match">${esc(s)}</span>`).join("")}${o.missing_skills.slice(0, 2).map((s) => `<span class="chip missing">${esc(s)}</span>`).join("")}</div>
         </div>
@@ -320,7 +320,7 @@
       <h3>You have</h3>
       <div class="chips">${o.matched_skills.map((s) => `<span class="chip match">${esc(s)}</span>`).join("") || `<span class="muted">No listed skill in common.</span>`}</div>
       <h3>The offer also asks for</h3>
-      <div class="chips">${o.missing_skills.map((s) => `<span class="chip missing">${esc(s)}</span>`).join("") || `<span class="muted">Nothing missing. You cover every skill we detected.</span>`}</div>
+      <div class="chips">${o.missing_skills.map((s) => `<span class="chip missing">${esc(s)}</span>`).join("") || ((o.matched_skills.length + o.missing_skills.length) < 4 ? `<span class="muted">Only ${o.matched_skills.length + o.missing_skills.length} skill${(o.matched_skills.length + o.missing_skills.length) !== 1 ? "s" : ""} detected — paste the full offer description for a more accurate analysis.</span>` : `<span class="muted">Nothing extra — you cover all detected requirements.</span>`)}</div>
       <h3>Offer</h3>
       <div class="desc">${esc(o.description)}</div>
       <div class="actions">
@@ -474,7 +474,7 @@
   async function runCfTest(o) {
     const result = $("#bias-result");
     result.hidden = false;
-    result.innerHTML = `<div class="thinking"><span class="plane"><i></i></span>Testing 3 name variants against your CV…</div>`;
+    result.innerHTML = `<div class="thinking"><span class="plane"><i></i></span>Testing 6 name variants (3 gender pairs, 3 origins) against your CV…</div>`;
     loader(result);
     try {
       const r = await api("/api/bias/test", { json: { offer: o } });
@@ -560,11 +560,14 @@
   }
 
   function cardHTML(a) {
+    const statusOpts = STATUSES.map((s) =>
+      `<option value="${s.key}"${s.key === a.status ? " selected" : ""}>${s.label}</option>`).join("");
     return `<li class="card" draggable="true" tabindex="0" data-id="${a.id}">
       <h4>${esc(a.title)}</h4><p class="co">${esc(a.company)}</p>
       <div class="row"><span class="st">${a.applied_at ? "Applied " + esc(a.applied_at) : esc(a.source || "")}</span>${a.score != null ? `<span class="pct">${a.score}</span>` : ""}</div>
       ${a.next_step ? `<p class="next">Next: ${esc(a.next_step)}${a.next_step_date ? ", " + esc(a.next_step_date) : ""}</p>` : ""}
       ${a.follow_up ? `<p class="fu">Follow up: ${a.days_since_applied} days without news</p>` : ""}
+      <select class="card-status-select" aria-label="Move to status" title="Move to status">${statusOpts}</select>
     </li>`;
   }
 
@@ -602,7 +605,14 @@
     await moveCard(dragId, col.dataset.status);
     dragId = null;
   });
-  board.addEventListener("click", (e) => { const c = e.target.closest(".card"); if (c) openEditor(+c.dataset.id); });
+  board.addEventListener("change", (e) => {
+    const sel = e.target.closest(".card-status-select");
+    if (sel) { e.stopPropagation(); moveCard(+sel.closest(".card").dataset.id, sel.value); }
+  });
+  board.addEventListener("click", (e) => {
+    if (e.target.closest(".card-status-select")) return; // don't open editor on select click
+    const c = e.target.closest(".card"); if (c) openEditor(+c.dataset.id);
+  });
   board.addEventListener("keydown", (e) => {
     const c = e.target.closest(".card"); if (!c) return;
     if (e.key === "Enter") openEditor(+c.dataset.id);
@@ -668,13 +678,13 @@
           status, applied_at: $("#e-applied").value || null, contact: $("#e-contact").value,
           next_step: $("#e-next").value, next_step_date: $("#e-next-date").value || null, notes: $("#e-notes").value,
         } });
-        await closeDrawers(); await loadBoard(false); toast("Changes saved.");
+        await closeDrawers(); await loadBoard(); toast("Changes saved.");
       } catch (err) { toast(err.message, true); }
     });
     $("#e-delete").addEventListener("click", async () => {
       if (!confirm(`Remove ${a.company} from your board?`)) return;
       await api(`/api/applications/${id}`, { method: "DELETE" });
-      await closeDrawers(); await loadBoard(false); toast("Removed from your board.");
+      await closeDrawers(); await loadBoard(); toast("Removed from your board.");
     });
     openDrawer("#editor");
   }
