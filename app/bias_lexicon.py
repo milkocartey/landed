@@ -4,9 +4,10 @@ Bias lexicon for Landed — offer wording analysis.
 Three categories:
 
 LEGAL_RISK
-  Wording that may be discriminatory under French law (Code du travail L.1133-1),
-  which prohibits hiring discrimination based on age, sex, origin, appearance, etc.,
-  unless the criterion is an essential and determining professional requirement.
+  Wording that may be discriminatory under French law (Code du travail L.1132-1),
+  which prohibits hiring discrimination based on age, sex, origin, appearance, etc.
+  (L.1133-1 is the exception that allows it when the criterion is an essential and
+  determining professional requirement).
 
 EXCLUSIONARY
   Wording that is not illegal per se but tends to exclude qualified candidates
@@ -34,8 +35,8 @@ LEGAL_RISK = [
     {
         "pattern": r"\byoung(?:\s+and\s+dynamic)?\b",
         "explanation": (
-            "Age criteria in job ads are illegal in France unless the role has "
-            "an essential and determining age requirement (Code du travail L.1133-1). "
+            "Age criteria in job ads are illegal in France (Code du travail L.1132-1) "
+            "unless the role has an essential and determining age requirement (exception: L.1133-1). "
             "'Young' implies an age preference."
         ),
         "suggestion": "Remove the age reference. Describe the seniority level instead (e.g. 'entry-level', 'junior').",
@@ -44,7 +45,7 @@ LEGAL_RISK = [
         "pattern": r"\byoung\s+professional\b",
         "explanation": (
             "Targeting 'young professionals' implies an age preference, which is "
-            "discriminatory under French law (Code du travail L.1133-1)."
+            "discriminatory under French law (Code du travail L.1132-1)."
         ),
         "suggestion": "Use 'early-career professional' or specify the number of years of experience.",
     },
@@ -52,7 +53,7 @@ LEGAL_RISK = [
         "pattern": r"\bjeune\s+et\s+dynamique\b",
         "explanation": (
             "Critère d'âge implicite : l'expression 'jeune et dynamique' cible un groupe "
-            "d'âge, ce qui est interdit par le Code du travail (L.1133-1)."
+            "d'âge, ce qui est interdit par le Code du travail (L.1132-1)."
         ),
         "suggestion": "Supprimer la référence à l'âge. Utiliser uniquement 'dynamique' ou décrire le rythme de travail.",
     },
@@ -60,19 +61,19 @@ LEGAL_RISK = [
         "pattern": r"\bjeune\b",
         "explanation": (
             "Critère d'âge : cibler un candidat 'jeune' est interdit en France "
-            "(Code du travail L.1133-1) sauf si l'âge est une exigence professionnelle déterminante."
+            "(Code du travail L.1132-1) sauf si l'âge est une exigence professionnelle déterminante (L.1133-1)."
         ),
         "suggestion": "Décrire le niveau d'expérience souhaité (ex. : 'débutant accepté', 'junior').",
     },
     {
         "pattern": r"\bmax(?:imum)?\s*\d+\s*(?:years?|ans?)\b",
-        "explanation": "Explicit age cap is discriminatory and illegal in France (Code du travail L.1133-1).",
+        "explanation": "Explicit age cap is discriminatory and illegal in France (Code du travail L.1132-1).",
         "suggestion": "Remove the age limit entirely.",
     },
     {
         "pattern": r"\bgood\s+presentation\b",
         "explanation": (
-            "Appearance-based criteria are illegal in France (Code du travail L.1133-1) "
+            "Appearance-based criteria are illegal in France (Code du travail L.1132-1) "
             "unless the role strictly requires it (e.g. uniformed security)."
         ),
         "suggestion": "Specify what the role actually requires (e.g. 'client-facing role', 'professional attire required').",
@@ -80,7 +81,7 @@ LEGAL_RISK = [
     {
         "pattern": r"\bbonne\s+pr[eé]sentation\b",
         "explanation": (
-            "Critère d'apparence physique : illégal en France (Code du travail L.1133-1) "
+            "Critère d'apparence physique : illégal en France (Code du travail L.1132-1) "
             "sauf si justifié par la nature essentielle du poste."
         ),
         "suggestion": "Préciser ce que le poste implique réellement (ex. : 'poste en contact direct avec la clientèle').",
@@ -88,7 +89,7 @@ LEGAL_RISK = [
     {
         "pattern": r"\bpr[eé]sentable\b",
         "explanation": (
-            "Critère d'apparence physique implicite, potentiellement illégal (Code du travail L.1133-1)."
+            "Critère d'apparence physique implicite, potentiellement illégal (Code du travail L.1132-1)."
         ),
         "suggestion": "Préciser les exigences réelles du poste.",
     },

@@ -35,7 +35,7 @@ References:
   — Inspired the counterfactual fairness test: re-scoring the same CV with different candidate names to detect name-encoded signals in the embedding model.
 
 ### Legal references
-- *Code du travail français, article L.1133-1* — prohibits hiring discrimination based on origin, sex, age, appearance, and other criteria unless the criterion is an essential and determining professional requirement. Basis for the LEGAL_RISK lexicon category.
+- *Code du travail français, article L.1132-1* — prohibits hiring discrimination based on origin, sex, age, appearance, and other criteria. Article L.1133-1 is the exception allowing it when the criterion is an essential and determining professional requirement. Basis for the LEGAL_RISK lexicon category.
 
 ## Data
 - **Adzuna Jobs API** — live job offers, free developer tier. https://developer.adzuna.com
