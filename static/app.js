@@ -116,22 +116,37 @@
     try {
       const s = await api("/api/status");
       state.adzuna = s.adzuna;
-      if (!s.adzuna) {
-        // No Adzuna keys configured — hide the source toggle entirely
-        const srcField = $('[data-src="adzuna"]')?.closest(".field");
-        if (srcField) srcField.hidden = true;
-        state.source = "demo";
-        $('[data-src="demo"]')?.setAttribute("aria-checked", "true");
-        $('[data-src="adzuna"]')?.setAttribute("aria-checked", "false");
-      }
+      state.france_travail = s.france_travail;
+      // Hide live sources if keys not configured
+      if (!s.adzuna) $('[data-src="adzuna"]')?.setAttribute("disabled", "true");
+      if (!s.france_travail) $('[data-src="france_travail"]')?.setAttribute("disabled", "true");
     } catch (_) { /* server not ready */ }
   }
 
   // ------------------------------------------------------------------ CV
+  const DEMO_NAME = "Alex Martin";
+  function isDemoCV(cv) { return (cv.name || "").trim() === DEMO_NAME; }
+
   function renderProfile(cv) {
     state.cv = cv;
     document.body.classList.add("has-cv");
+    const isDemo = isDemoCV(cv);
+    document.body.classList.toggle("is-demo", isDemo);
     $("#cv-bar-text").textContent = `Matching with ${cv.name ? cv.name + "'s" : "your"} CV. Replace it anytime and offers are re-ranked.`;
+
+    // demo badge
+    const existing = $("#demo-badge");
+    if (isDemo && !existing) {
+      const badge = document.createElement("div");
+      badge.id = "demo-badge";
+      badge.className = "demo-badge";
+      badge.innerHTML = `<span>Demo mode — this is a sample CV. Upload your own below to personalise.</span>`;
+      const profileEl = $("#profile");
+      profileEl.insertBefore(badge, profileEl.firstChild);
+    } else if (!isDemo && existing) {
+      existing.remove();
+    }
+
     $("#profile").hidden = false;
     $("#p-name").textContent = cv.name || "Your CV";
     const nSec = Object.keys(cv.sections || {}).filter((k) => k !== "header").length;
@@ -140,7 +155,7 @@
     cv.skills.forEach((s) => { const c = window.SKILL_CAT?.[s] || categoryOf(s); (groups[c] ||= []).push(s); });
     $("#p-skills").innerHTML = Object.entries(groups).map(([cat, list]) =>
       `<div class="skill-group"><span>${esc(cat)}</span><div class="chips">${list.map((s) => `<span class="chip">${esc(s)}</span>`).join("")}</div></div>`
-    ).join("") || `<p class="muted">No known skills found. Check that your CV is a text PDF, not a scan.</p>`;
+    ).join("") || `<p class="muted">No known skills found. Check that your CV is a text PDF, not a scan. Or use "Paste CV text" below.</p>`;
     $("#p-sections").innerHTML = Object.entries(cv.sections || {}).map(([k, lines]) =>
       `<div class="sec"><b>${esc(SECTION_NAMES[k] || k)}</b>${lines.slice(0, 6).map((l) => `<p>${esc(l)}</p>`).join("")}${lines.length > 6 ? `<p>+ ${lines.length - 6} more lines</p>` : ""}</div>`
     ).join("");
@@ -164,32 +179,42 @@
     return "Other";
   }
 
-  async function uploadCV(file) {
+  async function uploadCV(file, opts = {}) {
+    const replacing = !!(state.cv && !opts.firstLoad);
     const fd = new FormData();
     fd.append("file", file);
     const drop = $("#drop");
     drop.querySelector("strong").textContent = "Reading your CV…";
     try {
-      renderProfile(await api("/api/cv", { method: "POST", body: fd }));
-      toast("CV loaded — finding your best matches…");
-      go("offers");
+      const cv = await api("/api/cv", { method: "POST", body: fd });
+      renderProfile(cv);
+      if (replacing) {
+        toast(`CV updated — ${cv.skills.length} skills detected. Check your profile below.`);
+        go("profile");
+      } else {
+        toast("CV loaded — finding your best matches…");
+        go("offers");
+      }
     } catch (err) {
       toast(err.message, true);
     } finally {
       drop.querySelector("strong").textContent = "Drop your CV here or choose a file";
+      // Clear so the same file can be re-selected
+      $("#cv-file").value = "";
     }
   }
-  $("#cv-file").addEventListener("change", (e) => e.target.files[0] && uploadCV(e.target.files[0]));
   const drop = $("#drop");
+  $("#cv-file").addEventListener("change", (e) => { if (e.target.files[0]) uploadCV(e.target.files[0]); });
   drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("#cv-file").click(); } });
   ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
   ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove("over")));
   drop.addEventListener("drop", (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) uploadCV(f); });
   $("#sample-cv").addEventListener("click", async () => {
     try {
-      renderProfile(await api("/api/cv/sample", { method: "POST" }));
-      toast("Sample CV loaded — finding matches…");
-      go("offers");
+      const cv = await api("/api/cv/sample", { method: "POST" });
+      renderProfile(cv);
+      toast("Demo CV loaded — explore the app, then upload your own CV to personalise.");
+      go("profile");
     } catch (err) { toast(err.message, true); }
   });
 
@@ -204,12 +229,19 @@
   $("#use-cv-text").addEventListener("click", async () => {
     const text = $("#cv-text").value.trim();
     if (!text) { toast("Paste some text first.", true); return; }
+    const replacing = !!state.cv;
     try {
-      renderProfile(await api("/api/cv/text", { json: { text } }));
-      toast("CV loaded — finding your best matches…");
+      const cv = await api("/api/cv/text", { json: { text } });
+      renderProfile(cv);
       $("#cv-paste-area").hidden = true;
       $("#cv-text").value = "";
-      go("offers");
+      if (replacing) {
+        toast(`CV updated — ${cv.skills.length} skills detected.`);
+        go("profile");
+      } else {
+        toast("CV loaded — finding your best matches…");
+        go("offers");
+      }
     } catch (err) { toast(err.message, true); }
   });
 
@@ -222,7 +254,11 @@
   // ------------------------------------------------------------------ offers
   $$(".toggle button").forEach((b) => b.addEventListener("click", () => {
     if (b.dataset.src === "adzuna" && !state.adzuna) {
-      toast("Live search needs free Adzuna keys in the .env file — see adzuna.com/developer.", true);
+      toast("Adzuna needs free API keys in .env — see adzuna.com/developer.", true);
+      return;
+    }
+    if (b.dataset.src === "france_travail" && !state.france_travail) {
+      toast("France Travail needs API keys in .env — register free at francetravail.io/data/api.", true);
       return;
     }
     state.source = b.dataset.src;
@@ -697,7 +733,11 @@
       const cv = await api("/api/cv");
       if (cv && cv.skills) {
         renderProfile(cv);
-        go("offers"); // return visit: skip onboarding, go straight to offers
+        if (isDemoCV(cv)) {
+          go("profile"); // demo: show profile with the demo banner visible
+        } else {
+          go("offers"); // returning user with their own CV: go straight to offers
+        }
       }
       await refreshApps();
     } catch (_) { /* first launch — stay on onboarding screen */ }

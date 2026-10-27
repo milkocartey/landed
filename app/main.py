@@ -58,6 +58,7 @@ def status():
         "llm": generator.active_backend(),
         "llm_model": generator.OLLAMA_MODEL if generator.active_backend() == "ollama" else generator.HF_MODEL,
         "adzuna": sources.adzuna_available(),
+        "france_travail": sources.france_travail_available(),
         "cv": bool(_cv),
     }
 
@@ -133,6 +134,12 @@ def search(req: SearchReq):
             offers = sources.search_adzuna(req.keywords or " ".join(cv["skills"][:2]), req.location)
         except Exception as e:  # noqa: BLE001
             raise HTTPException(502, f"Adzuna search failed: {e}")
+    elif req.source == "france_travail":
+        try:
+            kw = req.keywords or " ".join(cv["skills"][:3])
+            offers = sources.search_france_travail(kw, req.location)
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(502, f"France Travail search failed: {e}")
     else:
         offers = sources.demo_offers()
         if req.location:

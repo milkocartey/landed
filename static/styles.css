@@ -266,6 +266,7 @@ textarea { resize: vertical; line-height: 1.55; }
   transition: background .15s, color .15s;
 }
 .toggle button[aria-checked="true"] { background: var(--accent); color: #fff; }
+.toggle button[disabled] { opacity: 0.4; cursor: not-allowed; }
 
 /* ------------------------------------------------------------------ offers layout (split view) */
 .offers-layout {
@@ -299,6 +300,15 @@ textarea { resize: vertical; line-height: 1.55; }
   border: 1px solid #FDE68A; border-radius: 999px;
   padding: 1px 7px; margin-left: 6px; white-space: nowrap;
 }
+
+/* Demo mode banner */
+.demo-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-s);
+  padding: 10px 14px; margin-bottom: 16px;
+  font-size: 13px; color: #1E40AF;
+}
+.demo-badge span::before { content: "ℹ️  "; }
 
 /* Score ring */
 .score { position: relative; width: 54px; height: 54px; }

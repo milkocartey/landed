@@ -1,9 +1,10 @@
 """Where offers come from.
 
 1. Adzuna public API (free developer key, https://developer.adzuna.com) - live offers.
-2. Manual import - paste any offer (JobTeaser, LinkedIn, Welcome to the Jungle...).
+2. Indeed FR RSS feed (public, no auth) - live offers from indeed.fr.
+3. Manual import - paste any offer (JobTeaser, LinkedIn, Welcome to the Jungle...).
    No scraping: the user brings the text, which respects every site's terms of use.
-3. Demo dataset - data/demo_offers.json, synthetic offers so the app works offline.
+4. Demo dataset - data/demo_offers.json, synthetic offers so the app works offline.
 """
 from __future__ import annotations
 
@@ -11,6 +12,7 @@ import hashlib
 import json
 import os
 import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import requests
@@ -63,6 +65,70 @@ def search_adzuna(keywords: str, location: str = "", country: str = "fr",
             "url": j.get("redirect_url", ""),
             "posted": (j.get("created") or "")[:10],
             "source": "Adzuna",
+        })
+    return out
+
+
+def france_travail_available() -> bool:
+    return bool(os.getenv("FT_CLIENT_ID") and os.getenv("FT_CLIENT_SECRET"))
+
+
+def _ft_token() -> str:
+    r = requests.post(
+        "https://entreprise.francetravail.fr/connexion/oauth2/access_token",
+        params={"realm": "/partenaire"},
+        data={
+            "grant_type": "client_credentials",
+            "client_id": os.environ["FT_CLIENT_ID"],
+            "client_secret": os.environ["FT_CLIENT_SECRET"],
+            "scope": "api_offresdemploiv2 o2dsoffre",
+        },
+        timeout=10,
+    )
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+
+def search_france_travail(keywords: str, location: str = "", n: int = 30) -> list[dict]:
+    """Fetch live internship offers from France Travail (ex-Pôle Emploi) API.
+    Register at https://francetravail.io/data/api/offres-demploi to get free keys.
+    Set FT_CLIENT_ID and FT_CLIENT_SECRET in .env.
+    """
+    if not france_travail_available():
+        raise RuntimeError("France Travail keys missing: set FT_CLIENT_ID and FT_CLIENT_SECRET in .env")
+    token = _ft_token()
+    params: dict = {
+        "typeContrat": "ST",  # stage
+        "range": f"0-{min(n, 149)}",
+    }
+    if keywords:
+        params["motsCles"] = keywords
+    if location:
+        params["lieuTravail"] = location
+    r = requests.get(
+        "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search",
+        headers={"Authorization": f"Bearer {token}"},
+        params=params,
+        timeout=20,
+    )
+    r.raise_for_status()
+    out = []
+    for j in (r.json().get("resultats") or []):
+        title = j.get("intitule", "")
+        company = (j.get("entreprise") or {}).get("nom", "Unknown company")
+        lieu = (j.get("lieuTravail") or {}).get("libelle", "")
+        description = _clean(j.get("description", ""))
+        link = j.get("origineOffre", {}).get("urlOrigine", "")
+        posted = (j.get("dateCreation") or "")[:10]
+        out.append({
+            "id": "ft-" + _id(title, company, j.get("id", "")),
+            "title": title,
+            "company": company,
+            "location": lieu,
+            "description": description,
+            "url": link,
+            "posted": posted,
+            "source": "France Travail",
         })
     return out
 

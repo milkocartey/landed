@@ -1,8 +1,12 @@
 """Tests for search location filter and empty state — item 7 fixes."""
+import json
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app, _save_cv
+
 from app.cv_parser import parse_cv
+from app.main import CV_FILE, app, _save_cv
 
 client = TestClient(app)
 
@@ -16,10 +20,16 @@ SKILLS
 Python, SQL, Data Analysis
 """
 
+_REAL_SAMPLE = Path(__file__).resolve().parent.parent / "data" / "sample_cv.txt"
+
 
 @pytest.fixture(autouse=True)
 def load_sample_cv():
     _save_cv(parse_cv(SAMPLE_CV_TEXT).to_dict())
+    yield
+    # Restore the real sample CV so tests don't corrupt data/cv.json
+    if _REAL_SAMPLE.exists():
+        _save_cv(parse_cv(_REAL_SAMPLE.read_text(encoding="utf-8")).to_dict())
 
 
 def test_search_returns_offers():
