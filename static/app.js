@@ -428,7 +428,6 @@
         r.legal.map((f) => `<div class="bias-flag">
           <span class="bias-match">${esc(f.match)}</span>
           <p>${esc(f.explanation)}</p>
-          <p class="suggestion">What this means for you: ${esc(f.suggestion)}</p>
         </div>`).join("")}</div>`);
     }
     if (r.exclusionary.length) {
@@ -436,7 +435,6 @@
         r.exclusionary.map((f) => `<div class="bias-flag">
           <span class="bias-match">${esc(f.match)}</span>
           <p>${esc(f.explanation)}</p>
-          <p class="suggestion">What this means for you: ${esc(f.suggestion)}</p>
         </div>`).join("")}</div>`);
     }
     const hasMasc = r.gender_masc.length > 0, hasFem = r.gender_fem.length > 0;
