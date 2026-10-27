@@ -41,7 +41,7 @@ References:
 - **Adzuna Jobs API** — live job offers, free developer tier. https://developer.adzuna.com
 - **France Travail API** — live job offers (ex-Pôle Emploi), free partner tier. https://francetravail.io/data/api
 - **[France-Travail-ML/Offres-Emplois-JAN-26-JUIN-26-RAW](https://huggingface.co/datasets/France-Travail-ML/Offres-Emplois-JAN-26-JUIN-26-RAW)** — real France Travail job postings, January-June 2026, uploaded by "France-Travail-ML". License: Apache-2.0 as declared by the uploader; provenance not independently verified by this project. Schema matches the public France Travail "Offres d'emploi" API. `scripts/build_offers_dataset.py` downloads it, keeps alternance/internship rows with a business-school-relevant title (marketing, finance, conseil, commercial, RH, supply chain, data, gestion de projet), and excludes a few unrelated trades that share those words — 3,100 offers saved to `data/offers_fr.json` ("Vraies offres (France 2026)" source). A bias scan with `app/bias.py` flagged 33/3,100 (1.1%) for legal-risk or exclusionary wording.
-- **`data/demo_offers.json`** — 22 neutral synthetic internship offers + 3 intentionally biased ones (marked "contains bias") with fictional companies, written for this project with the help of Claude (Anthropic). Not real offers.
+- **`data/demo_offers.json`** — 25 synthetic internship offers (23 neutral + 2 intentionally biased) with fictional companies, written for this project with the help of Claude (Anthropic). Not real offers.
 - **`data/sample_cv.txt` / `sample_cv.pdf`** — fictional CV ("Alex Martin"), written for this project.
 
 ## Optional
