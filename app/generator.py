@@ -74,9 +74,21 @@ def _hf_generate(messages: list[dict], max_new_tokens: int) -> str:
         if _pipe is None:
             from transformers import pipeline
             import torch
-            _pipe = pipeline("text-generation", model=HF_MODEL,
-                             torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                             device_map="auto")
+            # device_map="auto" lets accelerate decide placement from available
+            # memory; on an 8 GB Apple Silicon machine the fp32 model (~6 GB) doesn't
+            # comfortably fit, so accelerate offloads part of it to disk - and
+            # generate() on MPS with disk-offloaded weights crashes the whole process
+            # with a native MPSGraph deallocation error. Load directly onto one
+            # device instead of accelerate's auto dispatch, and use fp16 on
+            # CUDA/MPS (~3 GB) so the whole model fits in memory with no offload:
+            # CUDA > MPS > CPU fallback.
+            if torch.cuda.is_available():
+                device, dtype = 0, torch.float16
+            elif torch.backends.mps.is_available():
+                device, dtype = "mps", torch.float16
+            else:
+                device, dtype = -1, torch.float32
+            _pipe = pipeline("text-generation", model=HF_MODEL, torch_dtype=dtype, device=device)
     # Greedy decoding (do_sample=False) is ~2× faster than sampling on CPU
     out = _pipe(messages, max_new_tokens=max_new_tokens, do_sample=False,
                 return_full_text=False)
